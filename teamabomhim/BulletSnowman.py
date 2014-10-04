@@ -1,3 +1,5 @@
+# This code is no longer supported, and is only used as a reference. Use SnowmanMain.py instead.
+
 # Some of these probably aren't necessary, but we'll remove them when we need to
 import direct.directbase.DirectStart
 from panda3d.core import Vec3, BitMask32, Point3, KeyboardButton

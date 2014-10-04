@@ -1,4 +1,4 @@
-# This code is no longer supported, and is only used as a reference. Use BulletSnowman.py instead.
+# This code is no longer supported, and is only used as a reference. Use SnowmanMain.py instead.
 
 from direct.directbase import DirectStart
 from panda3d.core import Vec3, Vec4, KeyboardButton
