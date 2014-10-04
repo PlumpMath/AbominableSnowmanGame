@@ -1,6 +1,7 @@
 # Some of these probably aren't necessary, but we'll remove them when we need to
 import direct.directbase.DirectStart
-from panda3d.core import Vec3, VBase3, BitMask32, Point3, KeyboardButton, Filename, PNMImage
+from panda3d.core import Vec3, VBase3, Vec4, BitMask32, Point3, KeyboardButton, Filename, PNMImage, GeoMipTerrain
+from panda3d.core import LightRampAttrib, AmbientLight, DirectionalLight
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
@@ -16,6 +17,10 @@ MAX_VEL_XY = 50
 MAX_VEL_Z = 5000
 GRAVITY = 25
 MOVE_SPEED = 500
+START_POS_X = -5
+START_POS_Y = -8
+START_POS_Z = 40
+DEATH_HEIGHT = -20
 
 # Damping values (less is more damping)
 STOP_DAMPING = 0.80
@@ -48,15 +53,32 @@ debugNode.showBoundingBoxes(True)
 debugNode.showNormals(True)
 debugNP = render.attachNewNode(debugNode)
  
-# Heightmap Test
- 
- 
-# Plane (replace with a model or heightmap later)
-shape = BulletPlaneShape(Vec3(0, 0, 1), 1)
-planeNode = BulletRigidBodyNode('Ground')
-planeNode.addShape(shape)
+# Heightmap Terrain
+hmHeight = 40
+hmImg = PNMImage(Filename("models/debugHeightMap.png")) # Currently 129x129. Must be (2^n) + 1 height and width.
+hmShape = BulletHeightfieldShape(hmImg, hmHeight, ZUp)
+hmNode = BulletRigidBodyNode('Terrain')
+hmNode.addShape(hmShape)
+hmNode.setMass(0)
+hmNP = render.attachNewNode(hmNode)
+world.attachRigidBody(hmNode)
+
+hmOffset = hmImg.getXSize() / 2.0 - 0.5
+hmTerrain = GeoMipTerrain('gmTerrain')
+hmTerrain.setHeightfield(hmImg)
+hmTerrain.generate()
+
+hmTerrainNP = hmTerrain.getRoot()
+hmTerrainNP.setSz(hmHeight)
+hmTerrainNP.setPos(-hmOffset, -hmOffset, -hmHeight / 2.0)
+hmTerrainNP.reparentTo(render)
+
+# Death Zone plane
+planeShape = BulletPlaneShape(Vec3(0, 0, 1), 1)
+planeNode = BulletRigidBodyNode('DeathZone')
+planeNode.addShape(planeShape)
 planeNP = render.attachNewNode(planeNode)
-planeNP.setPos(0, 0, -20)
+planeNP.setPos(0, 0, DEATH_HEIGHT)
 world.attachRigidBody(planeNode)
  
 # Yeti
@@ -65,7 +87,7 @@ yetiRadius = 2
 yetiShape = BulletCapsuleShape(yetiRadius, yetiHeight - 2 * yetiRadius, ZUp)
 yetiModel = loader.loadModel("models/yeti")
 yetiModel.setH(90)
-yetiModel.setPos(0, 0, -1)
+yetiModel.setPos(0, 0, -1) # This is NOT the actual player position. Use playerNP instead.
 yetiModel.flattenLight()
 playerNode = BulletRigidBodyNode("Player")
 playerNode.setMass(8.0)
@@ -81,7 +103,7 @@ playerNode.setDeactivationEnabled(False)
 
 playerNP = worldNP.attachNewNode(playerNode)
 yetiModel.reparentTo(playerNP)
-playerNP.setPos(0, 0, 6)
+playerNP.setPos(START_POS_X, START_POS_Y, START_POS_Z)
 playerNP.setH(0)
 world.attachRigidBody(playerNP.node())
 
@@ -89,7 +111,20 @@ world.attachRigidBody(playerNP.node())
 base.cam.setPos(0, -40, 10)
 base.cam.reparentTo(playerNP)
 
-# Press F1 to enable debug mode.
+# Prettyful Lighting
+render.setShaderAuto()
+render.setAttrib(LightRampAttrib.makeHdr1())
+ambientLight = AmbientLight("ambientLight")
+ambientLight.setColor(Vec4(.4, .4, .4, 1))
+directionalLight = DirectionalLight("directionalLight")
+directionalLight.setDirection(Vec3(-5, -5, -5))
+directionalLight.setColor(Vec4(2.0, 2.0, 2.0, 1.0))
+directionalLight.setSpecularColor(Vec4(2.0, 2.0, 2.0, 1))
+render.setLight(render.attachNewNode(ambientLight))
+render.setLight(render.attachNewNode(directionalLight))
+
+# Press F1 to enable debug mode. WARNING: This will SEVERELY lag your computer. I'm talking 0.5 FPS.
+# Only enable this for debug purposes or if you have 4 GTX Titans in Quad SLI and an Extreme Edition CPU overclocked to 14GHz. AT LEAST.
 def toggleDebug():
   if debugNP.isHidden():
     debugNP.show()
@@ -97,7 +132,7 @@ def toggleDebug():
     debugNP.hide()
 
 world.setDebugNode(debugNP.node())
-debugNP.show()
+debugNP.hide()
 
 # Calculates various forces every frame
 def move():
@@ -108,17 +143,31 @@ def move():
 	cameraTargetHeight = 6.0
 	cameraDistance = 50
 	
-	# Only reset the jumping flag if the player has made contact with the ground
-	contactResult = world.contactTestPair(playerNode, planeNode)
-	contacts = contactResult.getContacts()
-	for contact in contacts:
+	# Contacts between the player and terrain
+	contactTerrain = world.contactTestPair(playerNode, hmNode)
+	contactsTer = contactTerrain.getContacts()
+	
+	# Contacts between the player and the death zone
+	contactPlane = world.contactTestPair(playerNode, planeNode)
+	contactsPla = contactPlane.getContacts()
+	
+	# If the player and terrain make contact, reset the jump flag.
+	for contact in contactsTer:
+		c1 = contact.getNode0().getName()
+		c2 = contact.getNode1().getName()
+		if(c1 == playerNode.getName() and c2 == hmNode.getName()):
+			isJumping = False
+			break
+	
+	# If the player and the death zone make contact, negate all forces and respawn the player.
+	for contact in contactsPla:
 		c1 = contact.getNode0().getName()
 		c2 = contact.getNode1().getName()
 		if(c1 == playerNode.getName() and c2 == planeNode.getName()):
-			isJumping = False
-			# playerNode.setLinearDamping(0.0)
+			playerVelocity = Vec3(0,0,0)
+			playerNP.setPos(START_POS_X, START_POS_Y, START_POS_Z)
+			print("DEAD")
 			break
-	
 	
 	# Mouse camera control
 	if base.mouseWatcherNode.hasMouse():
@@ -128,17 +177,13 @@ def move():
 		deltaX = md.getX() - 200
 		deltaY = md.getY() - 200
 		base.win.movePointer(0, 200, 200)
-		
 		playerNP.setH(playerNP.getH() - 0.3 * deltaX)
-		
 		cameraPitch = cameraPitch + 0.1 * deltaY
 		if (cameraPitch < -60): cameraPitch = -60
 		if (cameraPitch >  80): cameraPitch =  80
 		base.camera.setHpr(0, cameraPitch, 0)
 		base.camera.setPos(0, 0, cameraTargetHeight/2)
 		base.camera.setY(base.camera, cameraDistance)
-		
-		
 	
 	# Function for polling keys
 	keyPressed = base.mouseWatcherNode.is_button_down
@@ -183,6 +228,10 @@ def move():
 	elif keyPressed(keyRight):
 		playerNP.setH(playerRotation + (globalClock.getDt() * -TURN_SPEED))
 		playerNode.setLinearVelocity(Vec3(playerVelocity.getX() * TURN_DAMPING, playerVelocity.getY() * TURN_DAMPING, playerVelocity.getZ()))
+	
+	# Prevent super-bounces with steep slopes
+	if playerVelocity.getZ() > 5:
+		isJumping = True
 	
 	# Make the player jump
 	if keyPressed(keySpace):
