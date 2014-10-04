@@ -1,9 +1,9 @@
 # Some of these probably aren't necessary, but we'll remove them when we need to
 import direct.directbase.DirectStart
-from panda3d.core import Vec3, BitMask32, Point3, KeyboardButton
+from panda3d.core import Vec3, VBase3, BitMask32, Point3, KeyboardButton, Filename, PNMImage
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode
-from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape
+from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
 from panda3d.bullet import ZUp
 from math import sin, cos, pi
 from direct.showbase.DirectObject import DirectObject
@@ -16,6 +16,11 @@ MAX_VEL_XY = 50
 MAX_VEL_Z = 5000
 GRAVITY = 25
 MOVE_SPEED = 500
+
+# Damping values (less is more damping)
+STOP_DAMPING = 0.80
+JMP_STOP_DAMPING = 0.88
+TURN_DAMPING = 0.92
 PNT = Point3(0,0,0)  # applyForce requires a Point to be passed
 
 # A print that will only print if DEBUG is True
@@ -43,12 +48,15 @@ debugNode.showBoundingBoxes(True)
 debugNode.showNormals(True)
 debugNP = render.attachNewNode(debugNode)
  
+# Heightmap Test
+ 
+ 
 # Plane (replace with a model or heightmap later)
 shape = BulletPlaneShape(Vec3(0, 0, 1), 1)
 planeNode = BulletRigidBodyNode('Ground')
 planeNode.addShape(shape)
 planeNP = render.attachNewNode(planeNode)
-planeNP.setPos(0, 0, -2)
+planeNP.setPos(0, 0, -20)
 world.attachRigidBody(planeNode)
  
 # Yeti
@@ -95,7 +103,10 @@ debugNP.show()
 def move():
 	playerVelocity = playerNode.getLinearVelocity()
 	global isJumping
-	playerRotation = playerNP.getH() 
+	playerRotation = playerNP.getH()
+	cameraPitch = 10
+	cameraTargetHeight = 6.0
+	cameraDistance = 50
 	
 	# Only reset the jumping flag if the player has made contact with the ground
 	contactResult = world.contactTestPair(playerNode, planeNode)
@@ -105,49 +116,76 @@ def move():
 		c2 = contact.getNode1().getName()
 		if(c1 == playerNode.getName() and c2 == planeNode.getName()):
 			isJumping = False
-			playerNode.setLinearDamping(0.0)
+			# playerNode.setLinearDamping(0.0)
 			break
 	
+	
+	# Mouse camera control
+	if base.mouseWatcherNode.hasMouse():
+		md = base.win.getPointer(0)
+		x = md.getX()
+		y = md.getY()
+		deltaX = md.getX() - 200
+		deltaY = md.getY() - 200
+		base.win.movePointer(0, 200, 200)
+		
+		playerNP.setH(playerNP.getH() - 0.3 * deltaX)
+		
+		cameraPitch = cameraPitch + 0.1 * deltaY
+		if (cameraPitch < -60): cameraPitch = -60
+		if (cameraPitch >  80): cameraPitch =  80
+		base.camera.setHpr(0, cameraPitch, 0)
+		base.camera.setPos(0, 0, cameraTargetHeight/2)
+		base.camera.setY(base.camera, cameraDistance)
+		
+		
 	
 	# Function for polling keys
 	keyPressed = base.mouseWatcherNode.is_button_down
 	
 	# If we get a key hold, continuously apply force until we hit the max velocity
 	if keyPressed(keyForward):
-		debugP("forward")
 		
 		# Cap velocity at the constant.
 		if(abs(playerVelocity.getY()) > MAX_VEL_XY):
-			debugP("Y vel Capped")
 			playerVelocity.setY(MAX_VEL_XY)
+		elif(abs(playerVelocity.getX()) > MAX_VEL_XY):
+			playerVelocity.setX(MAX_VEL_XY)
 		else:
-			
+		
 			# Get the yeti to move in a relative forward based on its rotation
 			playerNode.applyForce((-MOVE_SPEED * sin(playerRotation * DEG_TO_RAD), MOVE_SPEED * cos(playerRotation * DEG_TO_RAD), 0), PNT)
+		
 	
 	# Same thing for backwards, but only at half speed
 	elif keyPressed(keyBack):
-		debugP("back")
-		if(abs(playerVelocity.getY()) > MAX_VEL_XY):
-			debugP("Y vel at max")
-			playerVelocity.setY(-MAX_VEL_XY / 2)
+		if(abs(playerVelocity.getY()) > MAX_VEL_XY / 2):
+			playerVelocity.setY(MAX_VEL_XY / 2)
+		elif(abs(playerVelocity.getX()) > MAX_VEL_XY / 2):
+			playerVelocity.setX(MAX_VEL_XY / 2)
 		else:
 			playerNode.applyForce((MOVE_SPEED * sin(playerRotation * DEG_TO_RAD) / 2, -MOVE_SPEED * cos(playerRotation * DEG_TO_RAD) / 2, 0), PNT)
+			
 	else:
 		
-		# When back or forward is released, dampen the momentum
-		if not(isJumping):
-			playerNode.setLinearDamping(0.9)
+		if(isJumping):
+			# If the player is in the middle of a jump and releases the jump key, reduce the velocity
+			playerNode.setLinearVelocity(Vec3(playerVelocity.getX() * JMP_STOP_DAMPING, playerVelocity.getY() * JMP_STOP_DAMPING, playerVelocity.getZ()))
+			
+		else:
+			# When back or forward is released, stop movement.
+			playerNode.setLinearVelocity(Vec3(playerVelocity.getX() * STOP_DAMPING, playerVelocity.getY() * STOP_DAMPING, playerVelocity.getZ()))
 	
 	# Rotate the player CCW or CW when A or D is held.
 	if keyPressed(keyLeft):
 		playerNP.setH(playerRotation + (globalClock.getDt() * TURN_SPEED))
+		playerNode.setLinearVelocity(Vec3(playerVelocity.getX() * TURN_DAMPING, playerVelocity.getY() * TURN_DAMPING, playerVelocity.getZ()))
 	elif keyPressed(keyRight):
 		playerNP.setH(playerRotation + (globalClock.getDt() * -TURN_SPEED))
+		playerNode.setLinearVelocity(Vec3(playerVelocity.getX() * TURN_DAMPING, playerVelocity.getY() * TURN_DAMPING, playerVelocity.getZ()))
 	
 	# Make the player jump
 	if keyPressed(keySpace):
-		debugP("jump")
 		if(isJumping == False):
 			isJumping = True
 			playerNode.applyForce((0, 0, 14000), PNT)
@@ -158,6 +196,7 @@ def move():
 # Function-based keybindings
 o = DirectObject()
 o.accept('f1', toggleDebug)
+o.accept('escape', base.userExit)
 
 # Update
 def update(task):
