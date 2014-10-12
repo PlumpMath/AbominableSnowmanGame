@@ -135,6 +135,14 @@ class SMWorld(DirectObject):
 			self.playerObj.jump()
 		self.camObj.lookAt(self.playerObj.getNodePath())
 		
+		#adjusts player movement if in deep snow
+		if self.playerObj.isSnow:
+			self.playerObj.MAX_VEL_XY = 25
+			self.playerObj.MAX_VEL_Z = 25
+		else:
+			self.playerObj.MAX_VEL_XY = 50
+			self.playerObj.MAX_VEL_Z = 5000
+		
 	
 	def doPlayerTests(self):
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
@@ -146,10 +154,11 @@ class SMWorld(DirectObject):
 		if(GHOST_NODE != None):
 			if(self.colObj.didCollide(self.playerNP.node(), GHOST_NODE)):
 				self.playerObj.setSnow(True)
+				print "hi"
 			else:
 				self.playerObj.setSnow(False)
-		else:
-			#print "No!"
+				print "mew"
+
 		
 	
 	def update(self, task):
