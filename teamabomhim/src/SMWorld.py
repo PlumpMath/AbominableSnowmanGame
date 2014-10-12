@@ -1,6 +1,6 @@
-from panda3d.core import Vec3, Vec4, PNMImage, Filename, GeoMipTerrain
+from panda3d.core import BitMask32, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain
 from panda3d.bullet import BulletWorld
-from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode
+from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode, BulletGhostNode
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
 from panda3d.bullet import ZUp
 from direct.showbase.DirectObject import DirectObject
@@ -13,10 +13,11 @@ from SMCollisionHandler import SMCollisionHandler
 from SMLighting import SMLighting
 
 GRAVITY = 96
+GHOST_NODE = None
 
 class SMWorld(DirectObject):
-	
-	
+
+		
 	def __init__(self, gameState, mapName, deathHeight):
 	
 		self.worldObj = self.setupWorld()
@@ -33,9 +34,13 @@ class SMWorld(DirectObject):
 		self.camObj.setPos(0, -40, 10)
 		self.camObj.reparentTo(self.playerNP)
 		
+		self.accept('z', self.fire)
+		
+		
 		taskMgr.add(self.update, 'UpdateTask')
 		
 		print("World initialized.")
+
 	
 	def setupWorld(self):
 		self.worldBullet = BulletWorld()
@@ -43,6 +48,24 @@ class SMWorld(DirectObject):
 		wNP = render.attachNewNode('WorldNode')
 		return wNP
 	
+    #pressing the z button will spawn a block of snow where the snowman is
+	def fire(self):
+		pos = self.playerObj.getPosition()
+		shape = BulletBoxShape(Vec3(12, 12, 3))
+		ghostNode = BulletGhostNode('Box')
+		
+		ghostNode.addShape(shape)
+		snowNode = render.attachNewNode(ghostNode)
+		snowNode.setPos(pos)
+		snowNode.setCollideMask(BitMask32(0x0f))
+		self.worldBullet.attachGhost(ghostNode)
+		visualSN = loader.loadModel("../res/models/snow.egg")
+		visualSN.reparentTo(snowNode)
+		
+		global GHOST_NODE 
+		GHOST_NODE = ghostNode
+		
+		
 	def printSceneGraph(self):
 		print(render.ls())
 	
@@ -111,12 +134,23 @@ class SMWorld(DirectObject):
 		if self.kh.poll(' '):
 			self.playerObj.jump()
 		self.camObj.lookAt(self.playerObj.getNodePath())
+		
 	
 	def doPlayerTests(self):
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
 			self.playerObj.setAirborneFlag(False)
 		else:
 			self.playerObj.setAirborneFlag(True)
+		
+		#test if player is colliding with snow, update appropriatly
+		if(GHOST_NODE != None):
+			if(self.colObj.didCollide(self.playerNP.node(), GHOST_NODE)):
+				self.playerObj.setSnow(True)
+			else:
+				self.playerObj.setSnow(False)
+		else:
+			#print "No!"
+		
 	
 	def update(self, task):
 		dt = globalClock.getDt()

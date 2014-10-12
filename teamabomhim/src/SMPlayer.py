@@ -25,6 +25,7 @@ class SMPlayer():
 		self.wNP = wNP
 		self.playerNP = self.setupPlayer(startX, startY, startZ)
 		self.isAirborne = True
+		self.isSnow = False
 		self.velocity = Vec3(0,0,0)
 		self.rotation = self.playerNP.getH()
 		print("Player initialized.")
@@ -67,9 +68,13 @@ class SMPlayer():
 	
 	def setAirborneFlag(self, flag):
 		self.isAirborne = flag
+		
+	def setSnow(self, flag):
+		self.isSnow = flag
 	
 	# True = forward, False = backward
 	def move(self, dir):
+		global MOVE_SPEED
 		x = 0
 		y = 0
 		if(self.getSpeed().getY() > MAX_VEL_XY):
@@ -81,6 +86,7 @@ class SMPlayer():
 				self.applyForce(Vec3((-MOVE_SPEED * globalClock.getDt()) * sin(self.getRotation() * DEG_TO_RAD), (MOVE_SPEED * globalClock.getDt()) * cos(self.getRotation() * DEG_TO_RAD), 0))
 			else:
 				self.applyForce(Vec3((MOVE_SPEED * globalClock.getDt()) * sin(self.getRotation() * DEG_TO_RAD) / 2, (-MOVE_SPEED * globalClock.getDt()) * cos(self.getRotation() * DEG_TO_RAD) / 2, 0))
+			
 	
 	def stop(self):
 		vx = self.getVelocity().getX()
