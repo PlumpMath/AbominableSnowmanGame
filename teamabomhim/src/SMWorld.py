@@ -1,4 +1,4 @@
-from panda3d.core import BitMask32, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain
+from panda3d.core import BitMask32, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode, BulletGhostNode
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
@@ -79,9 +79,9 @@ class SMWorld(DirectObject):
 	def setupHeightmap(self, name):
 		hmHeight = 80
 		hmPath = "../maps/" + name + "-h.png"
-		cmPath = "../maps/" + name + "-t.png"
-		hmImg = PNMImage(Filename(hmPath)) 
-		cmImg = PNMImage(Filename(cmPath))
+		imPath = "../maps/" + name + "-i.png"
+		smPath = "../maps/" + name + "-s.png"
+		hmImg = PNMImage(Filename(hmPath))
 		hmShape = BulletHeightfieldShape(hmImg, hmHeight, ZUp)
 		hmNode = BulletRigidBodyNode('Terrain')
 		hmNode.addShape(hmShape)
@@ -92,7 +92,6 @@ class SMWorld(DirectObject):
 		hmOffset = hmImg.getXSize() / 2.0 - 0.5
 		hmTerrain = GeoMipTerrain('gmTerrain')
 		hmTerrain.setHeightfield(hmImg)
-		hmTerrain.setColorMap(cmImg)
 		hmTerrain.setBruteforce(True)
 		hmTerrain.generate()
 
@@ -100,8 +99,41 @@ class SMWorld(DirectObject):
 		hmTerrainNP.setSz(hmHeight)
 		hmTerrainNP.setPos(-hmOffset, -hmOffset, -hmHeight / 2.0)
 		hmTerrainNP.reparentTo(render)
+
+                ts = TextureStage("stage-alpha")
+                ts.setSort(0)
+                ts.setPriority(1)
+                ts.setMode(TextureStage.MReplace)
+                ts.setSavedResult(True)
+                hmTerrainNP.setTexture(ts, loader.loadTexture(imPath, smPath))
+        
+                ts = TextureStage("stage-stone")
+                ts.setSort(1)
+                ts.setPriority(1)
+                ts.setMode(TextureStage.MReplace)
+                hmTerrainNP.setTexture(ts, loader.loadTexture("../../textures/stone_tex.png"))
+                hmTerrainNP.setTexScale(ts, 32, 32)
+
+                ts = TextureStage("stage-ice")
+                ts.setSort(2)
+                ts.setPriority(1)
+                ts.setCombineRgb(TextureStage.CMInterpolate, TextureStage.CSTexture, TextureStage.COSrcColor,
+                                 TextureStage.CSPrevious, TextureStage.COSrcColor,
+                                 TextureStage.CSLastSavedResult, TextureStage.COSrcColor)
+                hmTerrainNP.setTexture(ts, loader.loadTexture("../../textures/ice_tex.png"))
+                hmTerrainNP.setTexScale(ts, 32, 32)
+
+                ts = TextureStage("stage-snow")
+                ts.setSort(3)
+                ts.setPriority(0)
+                ts.setCombineRgb(TextureStage.CMInterpolate, TextureStage.CSTexture, TextureStage.COSrcColor,
+                                 TextureStage.CSPrevious, TextureStage.COSrcColor,
+                                 TextureStage.CSLastSavedResult, TextureStage.COSrcAlpha)
+                hmTerrainNP.setTexture(ts, loader.loadTexture("../../textures/snow_tex_1.png"))
+                hmTerrainNP.setTexScale(ts, 32, 32)
+
 		return hmNode
-	
+
 	def setupDeathzone(self, height):
 		planeShape = BulletPlaneShape(Vec3(0, 0, 1), 1)
 		planeNode = BulletRigidBodyNode('DeathZone')
