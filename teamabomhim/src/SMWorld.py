@@ -1,4 +1,4 @@
-from panda3d.core import BitMask32, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage
+from panda3d.core import BitMask32, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage, VBase4
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode, BulletGhostNode
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
@@ -81,6 +81,7 @@ class SMWorld(DirectObject):
 		hmPath = "../maps/" + name + "-h.png"
 		imPath = "../maps/" + name + "-i.png"
 		smPath = "../maps/" + name + "-s.png"
+		scmPath = "../maps/" + name + "-sc.png"
 		hmImg = PNMImage(Filename(hmPath))
 		hmShape = BulletHeightfieldShape(hmImg, hmHeight, ZUp)
 		hmNode = BulletRigidBodyNode('Terrain')
@@ -100,6 +101,25 @@ class SMWorld(DirectObject):
 		hmTerrainNP.setPos(-hmOffset, -hmOffset, -hmHeight / 2.0)
 		hmTerrainNP.reparentTo(render)
 
+		# Here begins the scenery mapping
+		tree = loader.loadModel("../res/models/tree_1.egg")
+		rock = loader.loadModel("../res/models/yeti.egg")
+		texpk = loader.loadTexture(scmPath).peek()
+		for i in range(0, texpk.getXSize()):
+                        for j in range(0, texpk.getYSize()):
+                                color = VBase4(0, 0, 0, 0)
+                                texpk.lookup(color, float(i) / texpk.getXSize(), float(j) / texpk.getYSize())
+                                if(int(color.getX() * 255) == 255):
+                                        newTree = render.attachNewNode("newTree")
+                                        newTree.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, hmTerrain.get_elevation(i, j) * hmHeight - hmHeight / 2)
+                                        # newTree.setScale can add some nice randomized scaling here.
+                                        tree.instanceTo(newTree)
+                                if(int(color.getX() * 255) == 128):
+                                        newRock = render.attachNewNode("newRock")
+                                        newRock.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, hmTerrain.get_elevation(i, j) * hmHeight - hmHeight / 2)
+                                        rock.instanceTo(newRock)
+
+                # Here begins the attribute mapping
                 ts = TextureStage("stage-alpha")
                 ts.setSort(0)
                 ts.setPriority(1)
