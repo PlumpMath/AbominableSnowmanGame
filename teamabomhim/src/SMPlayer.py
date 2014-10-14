@@ -1,4 +1,5 @@
-from panda3d.core import Vec3, VBase3, Vec4, BitMask32, Point3, KeyboardButton, Filename, PNMImage, GeoMipTerrain
+from panda3d.core import Vec3, VBase3, Vec4, BitMask32, Point3, KeyboardButton, Filename, PNMImage, GeoMipTerrain, VBase4
+from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import LightRampAttrib, AmbientLight, DirectionalLight
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode
@@ -17,7 +18,14 @@ STOP_DAMPING = 5
 JMP_STOP_DAMPING = 0.88
 TURN_DAMPING = 0.92
 PNT = Point3(0,0,0)
-	
+
+# Stuff for reading and displaying information from the friction map.
+FRICTION_LBL = OnscreenText(text = 'coefficient of friction: ', pos = (0, 0), scale = 0.1)
+TEXPK = loader.loadTexture('../maps/map01-f.png').peek()
+TXX = TEXPK.getXSize()
+TXY = TEXPK.getYSize()
+CALC_COF = lambda x: 0.4 * x + 0.05
+
 class SMPlayer():
 	
 	def __init__(self, wrld, wNP, startX, startY, startZ):
@@ -86,7 +94,11 @@ class SMPlayer():
 				self.applyForce(Vec3((-MOVE_SPEED * globalClock.getDt()) * sin(self.getRotation() * DEG_TO_RAD), (MOVE_SPEED * globalClock.getDt()) * cos(self.getRotation() * DEG_TO_RAD), 0))
 			else:
 				self.applyForce(Vec3((MOVE_SPEED * globalClock.getDt()) * sin(self.getRotation() * DEG_TO_RAD) / 2, (-MOVE_SPEED * globalClock.getDt()) * cos(self.getRotation() * DEG_TO_RAD) / 2, 0))
-			
+		color = VBase4(0, 0, 0, 0)
+		TEXPK.lookup(color, (self.playerNP.getX() + TXX / 2) / TXX, (self.playerNP.getY() + TXY / 2) / TXY)
+                # Here is where you would use CALC_COF(color.getX()) to set the ground friction
+                # Note, the use of the label really slows down drawing.
+                FRICTION_LBL.setText('coefficient of friction: ' + str(CALC_COF(color.getX())))
 	
 	def stop(self):
 		vx = self.getVelocity().getX()
