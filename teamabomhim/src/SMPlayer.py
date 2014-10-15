@@ -30,18 +30,19 @@ class SMPlayer():
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Constructor
-	# (BulletWorld, NodePath, int, int, int)
+	# (BulletWorld, NodePath of BulletWorld, int, int, int)
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def __init__(self, wrld, wNP, startX, startY, startZ):
-		self.wrld = wrld
-		self.wNP = wNP
+	def __init__(self, wrld, wNP, smWrld, startX, startY, startZ):
+		self.bulletWorld = wrld
+		self.worldNP = wNP
+		self.smWorld = smWrld
 		self.startX = startX
 		self.startY = startY
 		self.startZ = startZ
 		self.playerNP = self.setupPlayer(self.startX, self.startY, self.startZ)
 		self.isAirborne = True
-		self.isSnow = False
+		self.terrainType = -1
 		self.velocity = Vec3(0,0,0)
 		self.rotation = self.playerNP.getH()
 		print("Player initialized.")
@@ -54,7 +55,7 @@ class SMPlayer():
 		return self.playerNP
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
-	# Sets up and spawns the player at the specified coordinates.
+	# Sets up and spawns the player at the specified coordinates. 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def setupPlayer(self, x, y, z):
@@ -73,13 +74,13 @@ class SMPlayer():
 		playerNode.setAngularFactor(Vec3(0,0,0))
 
 		# Without this disabled, things will weld together after a certain amount of time. It's really annoying.
-		playerNode.setDeactivationEnabled(False) 
+		playerNode.setDeactivationEnabled(False)
 		
-		playerNP = self.wNP.attachNewNode(playerNode)
+		playerNP = self.worldNP.attachNewNode(playerNode)
 		playerNP.setPos(x, y, z)
 		playerNP.setH(0)
 		yetiModel.reparentTo(playerNP)
-		self.wrld.attachRigidBody(playerNP.node())
+		self.bulletWorld.attachRigidBody(playerNP.node())
 		return playerNP
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -98,6 +99,13 @@ class SMPlayer():
 			self.applyForce(Vec3(0, 0, JUMP_FORCE))
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Returns the airborne flag.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def getAirborneFlag(self):
+		return self.isAirborne
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Sets the airborne flag.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
@@ -105,11 +113,11 @@ class SMPlayer():
 		self.isAirborne = flag
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
-	# Sets the snow flag.
+	# Sets the terrain type.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def setSnow(self, flag):
-		self.isSnow = flag
+	def setTerrain(self, terID):
+		self.terrainType = terID
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Turns the player
@@ -140,6 +148,8 @@ class SMPlayer():
 			else:
 				self.applyForce(Vec3((MOVE_SPEED * globalClock.getDt()) * xFactor / 2, (-MOVE_SPEED * globalClock.getDt()) * yFactor / 2, 0))
 		
+		
+		
 		color = VBase4(0, 0, 0, 0)
 		TEXPK.lookup(color, (self.playerNP.getX() + TXX / 2) / TXX, (self.playerNP.getY() + TXY / 2) / TXY)
 		
@@ -148,10 +158,22 @@ class SMPlayer():
 		FRICTION_LBL.setText('coefficient of friction: ' + str(CALC_COF(color.getX())))
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Prevents DHP (Dukes of Hazard Phenomenon)
+	# (h = Terrain height at X,y; th = terrain z coord)
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def snapToTerrain(self, h, th):
+		pos = self.getPosition()
+		x = pos.getX()
+		y = pos.getY()
+		self.playerNP.setPos(x, y, (h - (th / 2)) + 3.7)
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Slows down and stops the player's horizontal movement.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def stop(self):
+		# print(self.getTerrainHeight())
 		vx = self.getVelocity().getX()
 		vy = self.getVelocity().getY()
 		vz = self.getVelocity().getZ()

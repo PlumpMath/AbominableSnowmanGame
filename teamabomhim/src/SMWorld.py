@@ -28,7 +28,7 @@ class SMWorld(DirectObject):
 		self.debugNode = self.setupDebug()
 		self.heightMap = self.setupHeightmap(mapName)
 		self.deathZone = self.setupDeathzone(deathHeight)
-		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, -5, -8, 40)
+		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, -5, -8, 40)
 		self.playerNP = self.playerObj.getNodePath()
 		self.kh = SMKeyHandler()
 		self.colObj = self.setupCollisionHandler()
@@ -124,7 +124,7 @@ class SMWorld(DirectObject):
 
 		# Here begins the scenery mapping
 		tree = loader.loadModel("../res/models/tree_1.egg")
-		rock = loader.loadModel("../res/models/yeti.egg")
+		rock = loader.loadModel("../res/models/rock_1.egg")
 		texpk = loader.loadTexture(scmPath).peek()
 		for i in range(0, texpk.getXSize()):
 			for j in range(0, texpk.getYSize()):
@@ -201,7 +201,7 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def getTerrainHeight(self, x, y):
-		return self.hmTerrain.get_elevation(x + self.hmOffset, y + self.hmOffset) * self.hmHeight - self.hmHeight
+		return self.hmTerrain.get_elevation(x + self.hmOffset, y + self.hmOffset) * self.hmHeight
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Handles player movement
@@ -230,12 +230,12 @@ class SMWorld(DirectObject):
 		self.camObj.lookAt(self.playerObj.getNodePath())
 		
 		#adjusts player movement if in deep snow
-		if self.playerObj.isSnow:
-			self.playerObj.MAX_VEL_XY = 25
-			self.playerObj.MAX_VEL_Z = 25
-		else:
-			self.playerObj.MAX_VEL_XY = 50
-			self.playerObj.MAX_VEL_Z = 5000
+		# if self.playerObj.isSnow:
+			# self.playerObj.MAX_VEL_XY = 25
+			# self.playerObj.MAX_VEL_Z = 25
+		# else:
+			# self.playerObj.MAX_VEL_XY = 50
+			# self.playerObj.MAX_VEL_Z = 5000
 		
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -244,19 +244,29 @@ class SMWorld(DirectObject):
 	
 	def doPlayerTests(self):
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
+			# print("col ground")
 			self.playerObj.setAirborneFlag(False)
 			self.playerObj.setFactor(1, 1, 1)
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.deathZone.node())):
 			self.playerObj.respawn()
 		
+		if(not(self.playerObj.getAirborneFlag())):
+			playerPos = self.playerObj.getPosition()
+			px = playerPos.getX()
+			py = playerPos.getY()
+			th = self.getTerrainHeight(px, py)
+			# print("Position: " + str(round(px)) + ", " + str(round(py)))
+			# print("- TerrHeit: " + str(round(th)))
+			self.playerObj.snapToTerrain(th, self.hmHeight)
+		
 		#test if player is colliding with snow, update appropriately
 		if(GHOST_NODE != None):
 			if(self.colObj.didCollide(self.playerNP.node(), GHOST_NODE)):
-				self.playerObj.setSnow(True)
+				# self.playerObj.setSnow(True)
 				print "hi"
 			else:
-				self.playerObj.setSnow(False)
+				# self.playerObj.setSnow(False)
 				print "mew"
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
