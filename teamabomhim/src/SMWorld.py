@@ -28,6 +28,8 @@ class SMWorld(DirectObject):
 		self.debugNode = self.setupDebug()
 		self.heightMap = self.setupHeightmap(mapName)
 		self.deathZone = self.setupDeathzone(deathHeight)
+		self.ballObj = SMBall(self.worldBullet, self.worldObj, -5, -6, 40)
+		self.ballNP = self.ballObj.getNodePath()
 		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, -5, -8, 40)
 		self.playerNP = self.playerObj.getNodePath()
 		self.kh = SMKeyHandler()
@@ -38,6 +40,8 @@ class SMWorld(DirectObject):
 		self.camObj.setPos(0, -40, 10)
 		self.camObj.reparentTo(self.playerNP)
 		
+		self.accept('b', self.ballObj.create, [2, 20, 30])
+
 		self.accept('z', self.fire)
 		self.accept('escape', base.userExit)
 		
