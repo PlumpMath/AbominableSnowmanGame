@@ -1,0 +1,13 @@
+For easier loading from panda, save all maps in this format for now:
+
+Heightmaps: <MAP NAME>-h.png
+Textures (colormaps): <MAP NAME>-t.png
+
+For example, a map has a name of "testMap", its two components would be named:
+testMap-h.png
+testMap-t.png
+
+We can add more map components easily by using a different letter, for instance
+-o for Objects
+-r for Terrain
+etc.
