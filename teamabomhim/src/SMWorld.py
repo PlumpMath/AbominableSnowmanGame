@@ -39,7 +39,7 @@ class SMWorld(DirectObject):
 		self.camObj.reparentTo(self.playerNP)
 		
 		self.accept('z', self.fire)
-		
+		self.accept('escape', base.userExit)
 		
 		taskMgr.add(self.update, 'UpdateTask')
 		
@@ -246,6 +246,9 @@ class SMWorld(DirectObject):
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
 			self.playerObj.setAirborneFlag(False)
 			self.playerObj.setFactor(1, 1, 1)
+		
+		if(self.colObj.didCollide(self.playerNP.node(), self.deathZone.node())):
+			self.playerObj.respawn()
 		
 		#test if player is colliding with snow, update appropriately
 		if(GHOST_NODE != None):

@@ -165,6 +165,8 @@ class SMPlayer():
 	
 	def respawn(self):
 		self.playerNP.setPos(self.startX, self.startY, self.startZ)
+		self.setVelocity(Vec3(0,0,0))
+		print("Player confirmed REKT.")
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Gets the player's current Vec3 position.

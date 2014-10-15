@@ -10,7 +10,7 @@ class Game(DirectObject):
 	
 	def __init__(self):
 		print("LINK START")
-		self.world = SMWorld(self.gameState, "map01", -20)
+		self.world = SMWorld(self.gameState, "map01", -30)
 		
 g = Game()
 run()
