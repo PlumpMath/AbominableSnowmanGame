@@ -28,18 +28,34 @@ CALC_COF = lambda x: 0.4 * x + 0.05
 
 class SMPlayer():
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Constructor
+	# (BulletWorld, NodePath, int, int, int)
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def __init__(self, wrld, wNP, startX, startY, startZ):
 		self.wrld = wrld
 		self.wNP = wNP
-		self.playerNP = self.setupPlayer(startX, startY, startZ)
+		self.startX = startX
+		self.startY = startY
+		self.startZ = startZ
+		self.playerNP = self.setupPlayer(self.startX, self.startY, self.startZ)
 		self.isAirborne = True
 		self.isSnow = False
 		self.velocity = Vec3(0,0,0)
 		self.rotation = self.playerNP.getH()
 		print("Player initialized.")
-		
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Returns the player class' NodePath
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def getNodePath(self):
 		return self.playerNP
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets up and spawns the player at the specified coordinates.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def setupPlayer(self, x, y, z):
 		yetiHeight = 7
@@ -66,65 +82,130 @@ class SMPlayer():
 		self.wrld.attachRigidBody(playerNP.node())
 		return playerNP
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Makes the player jump if they are not already jumping.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def jump(self):
-		if(self.getVelocity().getZ() > 5):
-			self.setAirborneFlag(True)
-		elif(self.isAirborne == False):
+		# if(abs(self.getVelocity().getZ()) < 10):
+			# self.setAirborneFlag(True)
+		if(self.isAirborne == False):
+			v = self.getVelocity()
 			self.setAirborneFlag(True)
 			print("Jump successful")
+			self.setFactor(1, 1, 1)
+			self.setVelocity(Vec3(v.getX(), v.getY(), 0))
 			self.applyForce(Vec3(0, 0, JUMP_FORCE))
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets the airborne flag.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def setAirborneFlag(self, flag):
 		self.isAirborne = flag
-		
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets the snow flag.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def setSnow(self, flag):
 		self.isSnow = flag
 	
-	# True = forward, False = backward
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Turns the player
+	# (direction True = CCW; False = CW)
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def turn (self, dir):
+		t = globalClock.getDt() * TURN_SPEED
+		self.setFactor(0, 0, 1)
+		if(dir == False):
+			t = t * -1
+		self.setRotation(self.getRotation() + t)
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Moves the player forward or backward relative to their rotation.
+	# (direction True = Forward; False = Backward)
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def move(self, dir):
 		global MOVE_SPEED
-		x = 0
-		y = 0
-		if(self.getSpeed().getY() > MAX_VEL_XY):
-			y = 0
-		elif(self.getSpeed().getX() > MAX_VEL_XY):
-			x = 0
-		else:
+		self.stop()
+		if((self.getSpeed().getY() <= MAX_VEL_XY) and (self.getSpeed().getX() <= MAX_VEL_XY)):
+			xFactor = sin(self.getRotation() * DEG_TO_RAD)
+			yFactor = cos(self.getRotation() * DEG_TO_RAD)
+			self.setFactor(1, 1, 1)
 			if(dir):
-				self.applyForce(Vec3((-MOVE_SPEED * globalClock.getDt()) * sin(self.getRotation() * DEG_TO_RAD), (MOVE_SPEED * globalClock.getDt()) * cos(self.getRotation() * DEG_TO_RAD), 0))
+				self.applyForce(Vec3((-MOVE_SPEED * globalClock.getDt()) * xFactor, (MOVE_SPEED * globalClock.getDt()) * yFactor, 0))
 			else:
-				self.applyForce(Vec3((MOVE_SPEED * globalClock.getDt()) * sin(self.getRotation() * DEG_TO_RAD) / 2, (-MOVE_SPEED * globalClock.getDt()) * cos(self.getRotation() * DEG_TO_RAD) / 2, 0))
+				self.applyForce(Vec3((MOVE_SPEED * globalClock.getDt()) * xFactor / 2, (-MOVE_SPEED * globalClock.getDt()) * yFactor / 2, 0))
+		
 		color = VBase4(0, 0, 0, 0)
 		TEXPK.lookup(color, (self.playerNP.getX() + TXX / 2) / TXX, (self.playerNP.getY() + TXY / 2) / TXY)
-                # Here is where you would use CALC_COF(color.getX()) to set the ground friction
-                # Note, the use of the label really slows down drawing.
-                FRICTION_LBL.setText('coefficient of friction: ' + str(CALC_COF(color.getX())))
+		
+		# Here is where you would use CALC_COF(color.getX()) to set the ground friction
+		# Note, the use of the label really slows down drawing.
+		FRICTION_LBL.setText('coefficient of friction: ' + str(CALC_COF(color.getX())))
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Slows down and stops the player's horizontal movement.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def stop(self):
 		vx = self.getVelocity().getX()
 		vy = self.getVelocity().getY()
 		vz = self.getVelocity().getZ()
+		self.setFactor(0, 0, 1)
 		dt = globalClock.getDt()
 		self.setVelocity(Vec3((vx - (vx * STOP_DAMPING * dt)), (vy - (vy * STOP_DAMPING * dt)), vz))
 	
-	# True = CCW, False = CW
-	def turn (self, dir):
-		t = globalClock.getDt() * TURN_SPEED
-		if(dir == False):
-			t = t * -1
-		self.setRotation(self.getRotation() + t)
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets the player's position to the spawn position.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def respawn(self):
+		self.playerNP.setPos(self.startX, self.startY, self.startZ)
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Gets the player's current Vec3 position.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def getPosition(self):
 		return self.playerNP.getPos()
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets the player's movement factors
+	# 0 < x/y/z < 1; 0 = No movement; 1 = Full movement
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def setFactor(self, x, y, z):
+		self.playerNP.node().setLinearFactor(Vec3(x, y, z))
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Applies a force vector.
+	# (Vec3 force)
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def applyForce(self, force):
 		self.playerNP.node().applyForce(force, PNT)
-		
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Gets the player's current velocity as a Vec3
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def getVelocity(self):
 		return self.playerNP.node().getLinearVelocity()
-		
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets the player's current velocity with the specified Vec3
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def setVelocity(self, vel):
 		self.playerNP.node().setLinearVelocity(vel)
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Gets the player's speed Vec3.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def getSpeed(self):
 		x = abs(self.getVelocity().getX())
@@ -132,11 +213,25 @@ class SMPlayer():
 		z = abs(self.getVelocity().getZ())
 		return Vec3(x, y, z)
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Gets the player's rotation.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def getRotation(self):
 		return self.playerNP.getH()
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets the player's rotation.
+	# -359 < angle < 359
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def setRotation(self, angle):
 		self.playerNP.setH(angle)
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets the player's animation loop.
+	# WORK IN PROGRESS.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def setAnimation(self, id):
-		print("TODO: set animation.")
+		print("[!] Not yet implemented!")

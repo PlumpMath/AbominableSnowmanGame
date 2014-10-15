@@ -17,7 +17,11 @@ GHOST_NODE = None
 
 class SMWorld(DirectObject):
 
-		
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Constructor
+	# (Game state, Map name, Height of death plane)
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def __init__(self, gameState, mapName, deathHeight):
 	
 		self.worldObj = self.setupWorld()
@@ -42,13 +46,19 @@ class SMWorld(DirectObject):
 		print("World initialized.")
 
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets up the world and returns a NodePath of the BulletWorld
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def setupWorld(self):
 		self.worldBullet = BulletWorld()
 		self.worldBullet.setGravity(Vec3(0, 0, -GRAVITY))
 		wNP = render.attachNewNode('WorldNode')
 		return wNP
 	
-    #pressing the z button will spawn a block of snow where the snowman is
+	#-----------------------------------------------------------------------------------------------------------------------------------------------------------
+    # Pressing the z button will spawn a block of snow where the snowman is
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	def fire(self):
 		pos = self.playerObj.getPosition()
 		shape = BulletBoxShape(Vec3(12, 12, 3))
@@ -65,9 +75,16 @@ class SMWorld(DirectObject):
 		global GHOST_NODE 
 		GHOST_NODE = ghostNode
 		
-		
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Prints all nodes that are a child of render.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def printSceneGraph(self):
 		print(render.ls())
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Initializes and returns a DebugNode NodePath.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def setupDebug(self):
 		debug = DebugNode()
@@ -76,84 +93,92 @@ class SMWorld(DirectObject):
 		debugNP.hide()
 		return debugNP
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Initializes and returns a BulletRigidBodyNode of the terrain, which loads the map with the specified name.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def setupHeightmap(self, name):
-		hmHeight = 80
+		self.hmHeight = 80
 		hmPath = "../maps/" + name + "-h.png"
 		imPath = "../maps/" + name + "-i.png"
 		smPath = "../maps/" + name + "-s.png"
 		scmPath = "../maps/" + name + "-sc.png"
 		hmImg = PNMImage(Filename(hmPath))
-		hmShape = BulletHeightfieldShape(hmImg, hmHeight, ZUp)
+		hmShape = BulletHeightfieldShape(hmImg, self.hmHeight, ZUp)
 		hmNode = BulletRigidBodyNode('Terrain')
 		hmNode.addShape(hmShape)
 		hmNode.setMass(0)
 		self.hmNP = render.attachNewNode(hmNode)
 		self.worldBullet.attachRigidBody(hmNode)
 
-		hmOffset = hmImg.getXSize() / 2.0 - 0.5
-		hmTerrain = GeoMipTerrain('gmTerrain')
-		hmTerrain.setHeightfield(hmImg)
-		hmTerrain.setBruteforce(True)
-		hmTerrain.generate()
+		self.hmOffset = hmImg.getXSize() / 2.0 - 0.5
+		self.hmTerrain = GeoMipTerrain('gmTerrain')
+		self.hmTerrain.setHeightfield(hmImg)
+		self.hmTerrain.setBruteforce(True)
+		self.hmTerrain.generate()
 
-		hmTerrainNP = hmTerrain.getRoot()
-		hmTerrainNP.setSz(hmHeight)
-		hmTerrainNP.setPos(-hmOffset, -hmOffset, -hmHeight / 2.0)
-		hmTerrainNP.reparentTo(render)
+		self.hmTerrainNP = self.hmTerrain.getRoot()
+		self.hmTerrainNP.setSz(self.hmHeight)
+		self.hmTerrainNP.setPos(-self.hmOffset, -self.hmOffset, -self.hmHeight / 2.0)
+		self.hmTerrainNP.reparentTo(render)
 
 		# Here begins the scenery mapping
 		tree = loader.loadModel("../res/models/tree_1.egg")
 		rock = loader.loadModel("../res/models/yeti.egg")
 		texpk = loader.loadTexture(scmPath).peek()
 		for i in range(0, texpk.getXSize()):
-                        for j in range(0, texpk.getYSize()):
-                                color = VBase4(0, 0, 0, 0)
-                                texpk.lookup(color, float(i) / texpk.getXSize(), float(j) / texpk.getYSize())
-                                if(int(color.getX() * 255) == 255):
-                                        newTree = render.attachNewNode("newTree")
-                                        newTree.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, hmTerrain.get_elevation(i, j) * hmHeight - hmHeight / 2)
-                                        # newTree.setScale can add some nice randomized scaling here.
-                                        tree.instanceTo(newTree)
-                                if(int(color.getX() * 255) == 128):
-                                        newRock = render.attachNewNode("newRock")
-                                        newRock.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, hmTerrain.get_elevation(i, j) * hmHeight - hmHeight / 2)
-                                        rock.instanceTo(newRock)
+			for j in range(0, texpk.getYSize()):
+				color = VBase4(0, 0, 0, 0)
+				texpk.lookup(color, float(i) / texpk.getXSize(), float(j) / texpk.getYSize())
+				if(int(color.getX() * 255) == 255):
+					newTree = render.attachNewNode("newTree")
+					newTree.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					# newTree.setScale can add some nice randomized scaling here.
+					tree.instanceTo(newTree)
+				if(int(color.getX() * 255) == 128):
+					newRock = render.attachNewNode("newRock")
+					newRock.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					rock.instanceTo(newRock)
 
-                # Here begins the attribute mapping
-                ts = TextureStage("stage-alpha")
-                ts.setSort(0)
-                ts.setPriority(1)
-                ts.setMode(TextureStage.MReplace)
-                ts.setSavedResult(True)
-                hmTerrainNP.setTexture(ts, loader.loadTexture(imPath, smPath))
-        
-                ts = TextureStage("stage-stone")
-                ts.setSort(1)
-                ts.setPriority(1)
-                ts.setMode(TextureStage.MReplace)
-                hmTerrainNP.setTexture(ts, loader.loadTexture("../../textures/stone_tex.png"))
-                hmTerrainNP.setTexScale(ts, 32, 32)
+		# Here begins the attribute mapping
+		ts = TextureStage("stage-alpha")
+		ts.setSort(0)
+		ts.setPriority(1)
+		ts.setMode(TextureStage.MReplace)
+		ts.setSavedResult(True)
+		self.hmTerrainNP.setTexture(ts, loader.loadTexture(imPath, smPath))
 
-                ts = TextureStage("stage-ice")
-                ts.setSort(2)
-                ts.setPriority(1)
-                ts.setCombineRgb(TextureStage.CMInterpolate, TextureStage.CSTexture, TextureStage.COSrcColor,
-                                 TextureStage.CSPrevious, TextureStage.COSrcColor,
-                                 TextureStage.CSLastSavedResult, TextureStage.COSrcColor)
-                hmTerrainNP.setTexture(ts, loader.loadTexture("../../textures/ice_tex.png"))
-                hmTerrainNP.setTexScale(ts, 32, 32)
+		ts = TextureStage("stage-stone")
+		ts.setSort(1)
+		ts.setPriority(1)
+		ts.setMode(TextureStage.MReplace)
+		self.hmTerrainNP.setTexture(ts, loader.loadTexture("../res/textures/stone_tex.png"))
+		self.hmTerrainNP.setTexScale(ts, 32, 32)
 
-                ts = TextureStage("stage-snow")
-                ts.setSort(3)
-                ts.setPriority(0)
-                ts.setCombineRgb(TextureStage.CMInterpolate, TextureStage.CSTexture, TextureStage.COSrcColor,
-                                 TextureStage.CSPrevious, TextureStage.COSrcColor,
-                                 TextureStage.CSLastSavedResult, TextureStage.COSrcAlpha)
-                hmTerrainNP.setTexture(ts, loader.loadTexture("../../textures/snow_tex_1.png"))
-                hmTerrainNP.setTexScale(ts, 32, 32)
+		ts = TextureStage("stage-ice")
+		ts.setSort(2)
+		ts.setPriority(1)
+		ts.setCombineRgb(TextureStage.CMInterpolate, TextureStage.CSTexture, TextureStage.COSrcColor,
+						 TextureStage.CSPrevious, TextureStage.COSrcColor,
+						 TextureStage.CSLastSavedResult, TextureStage.COSrcColor)
+		self.hmTerrainNP.setTexture(ts, loader.loadTexture("../res/textures/ice_tex.png"))
+		self.hmTerrainNP.setTexScale(ts, 32, 32)
+
+		ts = TextureStage("stage-snow")
+		ts.setSort(3)
+		ts.setPriority(0)
+		ts.setCombineRgb(TextureStage.CMInterpolate, TextureStage.CSTexture, TextureStage.COSrcColor,
+						 TextureStage.CSPrevious, TextureStage.COSrcColor,
+						 TextureStage.CSLastSavedResult, TextureStage.COSrcAlpha)
+		self.hmTerrainNP.setTexture(ts, loader.loadTexture("../res/textures/snow_tex_1.png"))
+		self.hmTerrainNP.setTexScale(ts, 32, 32)
 
 		return hmNode
-
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets up and returns the death zone plane (returns its NodePath) with the specified height.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def setupDeathzone(self, height):
 		planeShape = BulletPlaneShape(Vec3(0, 0, 1), 1)
 		planeNode = BulletRigidBodyNode('DeathZone')
@@ -163,14 +188,34 @@ class SMWorld(DirectObject):
 		self.worldBullet.attachRigidBody(planeNode)
 		return planeNP
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets up and returns the collision handler.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def setupCollisionHandler(self):
 		colHand = SMCollisionHandler(self.worldBullet)
 		return colHand
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Returns the terrain height of coordinates x and y from the heightmap.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def getTerrainHeight(self, x, y):
+		return self.hmTerrain.get_elevation(x + self.hmOffset, y + self.hmOffset) * self.hmHeight - self.hmHeight
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Handles player movement
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def playerMove(self):
 	
 		self.doPlayerTests()
-	
+		
+		if self.kh.poll('a'):
+			self.playerObj.turn(True)
+		elif self.kh.poll('d'):
+			self.playerObj.turn(False)
+		
 		if self.kh.poll('w'):
 			self.playerObj.move(True)
 		elif self.kh.poll('s'):
@@ -178,13 +223,10 @@ class SMWorld(DirectObject):
 		else:
 			self.playerObj.stop()
 		
-		if self.kh.poll('a'):
-			self.playerObj.turn(True)
-		elif self.kh.poll('d'):
-			self.playerObj.turn(False)
 		
 		if self.kh.poll(' '):
 			self.playerObj.jump()
+		
 		self.camObj.lookAt(self.playerObj.getNodePath())
 		
 		#adjusts player movement if in deep snow
@@ -196,13 +238,16 @@ class SMWorld(DirectObject):
 			self.playerObj.MAX_VEL_Z = 5000
 		
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Various tests concerning the player flags and collisions.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def doPlayerTests(self):
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
 			self.playerObj.setAirborneFlag(False)
-		else:
-			self.playerObj.setAirborneFlag(True)
+			self.playerObj.setFactor(1, 1, 1)
 		
-		#test if player is colliding with snow, update appropriatly
+		#test if player is colliding with snow, update appropriately
 		if(GHOST_NODE != None):
 			if(self.colObj.didCollide(self.playerNP.node(), GHOST_NODE)):
 				self.playerObj.setSnow(True)
@@ -211,7 +256,9 @@ class SMWorld(DirectObject):
 				self.playerObj.setSnow(False)
 				print "mew"
 
-		
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Update the world. Called every frame.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def update(self, task):
 		dt = globalClock.getDt()
