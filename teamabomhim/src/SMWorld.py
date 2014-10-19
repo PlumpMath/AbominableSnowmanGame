@@ -11,9 +11,9 @@ from SMKeyHandler import SMKeyHandler
 from SMCamera import SMCamera
 from SMCollisionHandler import SMCollisionHandler
 from SMLighting import SMLighting
+from SMCollect import SMCollect
 
 GRAVITY = 96
-GHOST_NODE = None
 
 class SMWorld(DirectObject):
 
@@ -40,9 +40,13 @@ class SMWorld(DirectObject):
 		self.camObj.setPos(0, -40, 10)
 		self.camObj.reparentTo(self.playerNP)
 		
+		self.collectObj = SMCollect(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ())
+		self.collectNP = self.collectObj.getNodePath()
 		# self.accept('b', self.ballObj.create, [2, 20, 30])
 
-		self.accept('z', self.fire)
+		
+		
+		
 		self.accept('escape', base.userExit)
 		
 		taskMgr.add(self.update, 'UpdateTask')
@@ -59,25 +63,6 @@ class SMWorld(DirectObject):
 		self.worldBullet.setGravity(Vec3(0, 0, -GRAVITY))
 		wNP = render.attachNewNode('WorldNode')
 		return wNP
-	
-	#-----------------------------------------------------------------------------------------------------------------------------------------------------------
-    # Pressing the z button will spawn a block of snow where the snowman is
-	#------------------------------------------------------------------------------------------------------------------------------------------------------------
-	def fire(self):
-		pos = self.playerObj.getPosition()
-		shape = BulletBoxShape(Vec3(12, 12, 3))
-		ghostNode = BulletGhostNode('Box')
-		
-		ghostNode.addShape(shape)
-		snowNode = render.attachNewNode(ghostNode)
-		snowNode.setPos(pos)
-		snowNode.setCollideMask(BitMask32(0x0f))
-		self.worldBullet.attachGhost(ghostNode)
-		visualSN = loader.loadModel("../res/models/snow.egg")
-		visualSN.reparentTo(snowNode)
-		
-		global GHOST_NODE 
-		GHOST_NODE = ghostNode
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Prints all nodes that are a child of render.
@@ -233,14 +218,6 @@ class SMWorld(DirectObject):
 		
 		self.camObj.lookAt(self.playerObj.getNodePath())
 		
-		#adjusts player movement if in deep snow
-		# if self.playerObj.isSnow:
-			# self.playerObj.MAX_VEL_XY = 25
-			# self.playerObj.MAX_VEL_Z = 25
-		# else:
-			# self.playerObj.MAX_VEL_XY = 50
-			# self.playerObj.MAX_VEL_Z = 5000
-		
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Various tests concerning the player flags and collisions.
@@ -265,13 +242,10 @@ class SMWorld(DirectObject):
 			self.playerObj.snapToTerrain(th, self.hmHeight)
 		
 		#test if player is colliding with snow, update appropriately
-		if(GHOST_NODE != None):
-			if(self.colObj.didCollide(self.playerNP.node(), GHOST_NODE)):
-				# self.playerObj.setSnow(True)
-				print "hi"
-			else:
-				# self.playerObj.setSnow(False)
-				print "mew"
+		
+		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP)):
+			self.collectObj.destroy()
+
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the world. Called every frame.
