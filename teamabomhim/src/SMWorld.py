@@ -4,6 +4,7 @@ from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacter
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
 from panda3d.bullet import ZUp
 from direct.showbase.DirectObject import DirectObject
+from direct.showbase.Transitions import Transitions
 
 from DebugNode import DebugNode
 from SMPlayer import SMPlayer
@@ -50,12 +51,27 @@ class SMWorld(DirectObject):
 		
 		# self.accept('b', self.ballObj.create, [2, 20, 30])
 
+                self.transition = Transitions(loader)
+
 		self.accept('escape', base.userExit)
+		self.accept('enter', self.pauseUnpause)
 		
-		taskMgr.add(self.update, 'UpdateTask')
+		self.pauseUnpause()
 		
 		print("World initialized.")
 
+
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Toggles the pause screen
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+        def pauseUnpause(self):
+                if taskMgr.hasTaskNamed('UpdateTask'):
+                        taskMgr.remove('UpdateTask')
+                        self.transition.fadeScreen(0.5)
+                else:
+                        taskMgr.add(self.update, 'UpdateTask')
+                        self.transition.noFade()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Sets up the world and returns a NodePath of the BulletWorld
