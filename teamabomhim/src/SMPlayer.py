@@ -20,7 +20,7 @@ TURN_DAMPING = 0.92
 PNT = Point3(0,0,0)
 
 # Stuff for reading and displaying information from the friction map.
-FRICTION_LBL = OnscreenText(text = 'coefficient of friction: ', pos = (0, 0), scale = 0.1)
+# FRICTION_LBL = OnscreenText(text = 'coefficient of friction: ', pos = (0, 0), scale = 0.1)
 TEXPK = loader.loadTexture('../maps/map01-f.png').peek()
 TXX = TEXPK.getXSize()
 TXY = TEXPK.getYSize()
@@ -45,6 +45,7 @@ class SMPlayer():
 		self.terrainType = -1
 		self.velocity = Vec3(0,0,0)
 		self.rotation = self.playerNP.getH()
+		self.fric = 0.45
 		print("Player initialized.")
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -155,7 +156,8 @@ class SMPlayer():
 		
 		# Here is where you would use CALC_COF(color.getX()) to set the ground friction
 		# Note, the use of the label really slows down drawing.
-		FRICTION_LBL.setText('coefficient of friction: ' + str(CALC_COF(color.getX())))
+		# FRICTION_LBL.setText('coefficient of friction: ' + str(CALC_COF(color.getX())))
+		self.fric = CALC_COF(color.getX())
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Prevents DHP (Dukes of Hazard Phenomenon)
@@ -189,6 +191,13 @@ class SMPlayer():
 		self.playerNP.setPos(self.startX, self.startY, self.startZ)
 		self.setVelocity(Vec3(0,0,0))
 		print("Player confirmed REKT.")
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Gets the player's friction value at its position.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def getFriction(self):
+		return self.fric
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Gets the player's current Vec3 position.

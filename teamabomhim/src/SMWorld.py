@@ -22,7 +22,7 @@ class SMWorld(DirectObject):
 	# (Game state, Map name, Height of death plane)
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def __init__(self, gameState, mapName, deathHeight):
+	def __init__(self, gameState, mapName, deathHeight, tObj):
 	
 		self.worldObj = self.setupWorld()
 		self.debugNode = self.setupDebug()
@@ -42,11 +42,14 @@ class SMWorld(DirectObject):
 		
 		self.collectObj = SMCollect(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ())
 		self.collectNP = self.collectObj.getNodePath()
+		
+		self.textObj = tObj
+		self.textObj.addText("yetiPos", "Position: ")
+		self.textObj.addText("yetiFric", "Friction: ")
+		self.textObj.addText("terrHeight", "T Height: ")
+		
 		# self.accept('b', self.ballObj.create, [2, 20, 30])
 
-		
-		
-		
 		self.accept('escape', base.userExit)
 		
 		taskMgr.add(self.update, 'UpdateTask')
@@ -104,8 +107,18 @@ class SMWorld(DirectObject):
 		self.hmTerrain = GeoMipTerrain('gmTerrain')
 		self.hmTerrain.setHeightfield(hmImg)
 		self.hmTerrain.setBruteforce(True)
+		
+		self.hmTerrain.setNear(40)
+		self.hmTerrain.setFar(100)
+		self.hmTerrain.setFocalPoint(base.camera)
+		self.hmTerrain.setMinLevel(16)
+		
 		self.hmTerrain.generate()
-
+		
+		# Let's improve performance, eh?
+		self.hmTerrain.getRoot().flattenStrong()
+		self.hmTerrain.getRoot().analyze()
+		
 		self.hmTerrainNP = self.hmTerrain.getRoot()
 		self.hmTerrainNP.setSz(self.hmHeight)
 		self.hmTerrainNP.setPos(-self.hmOffset, -self.hmOffset, -self.hmHeight / 2.0)
@@ -217,7 +230,7 @@ class SMWorld(DirectObject):
 			self.playerObj.jump()
 		
 		self.camObj.lookAt(self.playerObj.getNodePath())
-		
+		self.updateStats()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Various tests concerning the player flags and collisions.
@@ -237,15 +250,28 @@ class SMWorld(DirectObject):
 			px = playerPos.getX()
 			py = playerPos.getY()
 			th = self.getTerrainHeight(px, py)
-			# print("Position: " + str(round(px)) + ", " + str(round(py)))
-			# print("- TerrHeit: " + str(round(th)))
 			self.playerObj.snapToTerrain(th, self.hmHeight)
-		
-		#test if player is colliding with snow, update appropriately
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP)):
 			self.collectObj.destroy()
 
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Update the debug text.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def updateStats(self):
+		pos = self.playerObj.getPosition()
+		x = pos.getX()
+		y = pos.getY()
+		z = pos.getZ()
+		sx = str(round(x, 1))
+		sy = str(round(y, 1))
+		sz = str(round(z, 1))
+		fric = str(round(self.playerObj.getFriction(), 2))
+		tHeight = str(round(self.getTerrainHeight(x, y), 1))
+		self.textObj.editText("yetiPos", "Position: (" + sx + ", " + sy + ", " + sz + ")")
+		self.textObj.editText("yetiFric", "Friction: " + fric)
+		self.textObj.editText("terrHeight", "T Height: " + tHeight)
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the world. Called every frame.
