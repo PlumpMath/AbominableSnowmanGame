@@ -13,6 +13,7 @@ from SMCamera import SMCamera
 from SMCollisionHandler import SMCollisionHandler
 from SMLighting import SMLighting
 from SMCollect import SMCollect
+from SMBall import SMBall
 
 GRAVITY = 96
 
@@ -29,10 +30,15 @@ class SMWorld(DirectObject):
 		self.debugNode = self.setupDebug()
 		self.heightMap = self.setupHeightmap(mapName)
 		self.deathZone = self.setupDeathzone(deathHeight)
-		# self.ballObj = SMBall(self.worldBullet, self.worldObj, -5, -6, 40)
-		# self.ballNP = self.ballObj.getNodePath()
+		
+		
+		
 		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, -5, -8, 40)
 		self.playerNP = self.playerObj.getNodePath()
+		
+		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerNP)
+		self.ballNP = self.ballObj.getNodePath()
+		
 		self.kh = SMKeyHandler()
 		self.colObj = self.setupCollisionHandler()
 		self.ligObj = SMLighting(Vec4(.4, .4, .4, 1), Vec3(-5, -5, -5), Vec4(2.0, 2.0, 2.0, 1.0))
@@ -49,7 +55,7 @@ class SMWorld(DirectObject):
 		self.textObj.addText("yetiFric", "Friction: ")
 		self.textObj.addText("terrHeight", "T Height: ")
 		
-		# self.accept('b', self.ballObj.create, [2, 20, 30])
+		self.accept('b', self.spawnBall)
 
                 self.transition = Transitions(loader)
 
@@ -64,6 +70,12 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Toggles the pause screen
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	def spawnBall(self):
+		pos = self.playerObj.getPosition()
+		x = pos.getX()
+		y = pos.getY()
+		z = pos.getZ()
+		self.ballObj.create(x,y,z)
 	
         def pauseUnpause(self):
                 if taskMgr.hasTaskNamed('UpdateTask'):

@@ -87,6 +87,8 @@ class SMPlayer():
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Makes the player jump if they are not already jumping.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	def getPlayerNode(self):
+		return playerNode
 	
 	def jump(self):
 		# if(abs(self.getVelocity().getZ()) < 10):
@@ -144,11 +146,13 @@ class SMPlayer():
 			xFactor = sin(self.getRotation() * DEG_TO_RAD)
 			yFactor = cos(self.getRotation() * DEG_TO_RAD)
 			self.setFactor(1, 1, 1)
+			#----------------------
+			#if in  friction doesn't happen
+			#----------------------
 			if(dir):
 				self.applyForce(Vec3((-MOVE_SPEED * globalClock.getDt()) * xFactor, (MOVE_SPEED * globalClock.getDt()) * yFactor, 0))
 			else:
 				self.applyForce(Vec3((MOVE_SPEED * globalClock.getDt()) * xFactor / 2, (-MOVE_SPEED * globalClock.getDt()) * yFactor / 2, 0))
-		
 		
 		
 		color = VBase4(0, 0, 0, 0)
