@@ -50,6 +50,9 @@ class SMWorld(DirectObject):
 		self.collectObj = SMCollect(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ())
 		self.collectNP = self.collectObj.getNodePath()
 		
+		self.SMAI = SMAI(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ(), "../res/models/goat.egg", "Flee", self.playerNP)	
+		print("AI Initialized")
+		
 		self.textObj = tObj
 		self.textObj.addText("yetiPos", "Position: ")
 		self.textObj.addText("yetiFric", "Friction: ")
