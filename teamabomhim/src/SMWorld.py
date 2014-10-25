@@ -29,13 +29,10 @@ class SMWorld(DirectObject):
 	
 		self.worldObj = self.setupWorld()
 		self.debugNode = self.setupDebug()
-		self.heightMap = self.setupHeightmap(mapName)
-		self.deathZone = self.setupDeathzone(deathHeight)
-		
-		
-		
 		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, -5, -8, 40)
 		self.playerNP = self.playerObj.getNodePath()
+		self.heightMap = self.setupHeightmap(mapName)
+		self.deathZone = self.setupDeathzone(deathHeight)
 		
 		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerNP)
 		self.ballNP = self.ballObj.getNodePath()
@@ -56,6 +53,7 @@ class SMWorld(DirectObject):
 		
 		self.textObj = tObj
 		self.textObj.addText("yetiPos", "Position: ")
+		self.textObj.addText("yetiVel", "Velocity: ")
 		self.textObj.addText("yetiFric", "Friction: ")
 		self.textObj.addText("terrHeight", "T Height: ")
 		
@@ -139,12 +137,7 @@ class SMWorld(DirectObject):
 		self.hmTerrain = GeoMipTerrain('gmTerrain')
 		self.hmTerrain.setHeightfield(hmImg)
 		self.hmTerrain.setBruteforce(True)
-		
-		self.hmTerrain.setNear(40)
-		self.hmTerrain.setFar(100)
-		self.hmTerrain.setFocalPoint(base.camera)
-		self.hmTerrain.setMinLevel(16)
-		
+		self.hmTerrain.setMinLevel(3) # 3 seems to be a nice balance between quality and minimal clipping.
 		self.hmTerrain.generate()
 		
 		# Let's improve performance, eh?
@@ -269,6 +262,9 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def doPlayerTests(self):
+		
+		# TODO: Add out-of-bounds tests here.
+		
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
 			# print("col ground")
 			self.playerObj.setAirborneFlag(False)
@@ -296,12 +292,17 @@ class SMWorld(DirectObject):
 		x = pos.getX()
 		y = pos.getY()
 		z = pos.getZ()
+		vel = self.playerObj.getVelocity()
+		vx = str(round(vel.getX(), 1))
+		vy = str(round(vel.getY(), 1))
+		vz = str(round(vel.getZ(), 1))
 		sx = str(round(x, 1))
 		sy = str(round(y, 1))
 		sz = str(round(z, 1))
 		fric = str(round(self.playerObj.getFriction(), 2))
 		tHeight = str(round(self.getTerrainHeight(x, y), 1))
 		self.textObj.editText("yetiPos", "Position: (" + sx + ", " + sy + ", " + sz + ")")
+		self.textObj.editText("yetiVel", "Velocity: (" + vx + ", " + vy + ", " + vz + ")")
 		self.textObj.editText("yetiFric", "Friction: " + fric)
 		self.textObj.editText("terrHeight", "T Height: " + tHeight)
 
