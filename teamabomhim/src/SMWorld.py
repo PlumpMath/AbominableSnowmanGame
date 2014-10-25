@@ -15,6 +15,8 @@ from SMLighting import SMLighting
 from SMCollect import SMCollect
 from SMBall import SMBall
 from SMAI import SMAI
+from SMGUI import SMGUI
+from SMGUIElement import SMGUIElement
 
 GRAVITY = 96
 
@@ -37,20 +39,34 @@ class SMWorld(DirectObject):
 		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerNP)
 		self.ballNP = self.ballObj.getNodePath()
 		
+		# Key Handler
 		self.kh = SMKeyHandler()
+		
+		# Collision Handler
 		self.colObj = self.setupCollisionHandler()
+		
+		# Lighting
 		self.ligObj = SMLighting(Vec4(.4, .4, .4, 1), Vec3(-5, -5, -5), Vec4(2.0, 2.0, 2.0, 1.0))
 		
+		# Camera
 		self.camObj = SMCamera(0, 0, 0, self.playerObj.getNodePath())
 		self.camObj.setPos(0, -40, 10)
 		self.camObj.reparentTo(self.playerNP)
 		
+		# Collectables
 		self.collectObj = SMCollect(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ())
 		self.collectNP = self.collectObj.getNodePath()
 		
+		# GUI
+		self.GUI = SMGUI()
+		self.goatCounter = SMGUIElement("Goats: ", 3)
+		self.GUI.addElement("goats", self.goatCounter)
+		
+		# Survivor AI
 		self.SMAI = SMAI(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ(), "../res/models/goat.egg", "Flee", self.playerNP)	
 		print("AI Initialized")
 		
+		# Debug Text
 		self.textObj = tObj
 		self.textObj.addText("yetiPos", "Position: ")
 		self.textObj.addText("yetiVel", "Velocity: ")
@@ -59,7 +75,7 @@ class SMWorld(DirectObject):
 		
 		self.accept('b', self.spawnBall)
 
-                self.transition = Transitions(loader)
+		self.transition = Transitions(loader)
 
 		self.accept('escape', base.userExit)
 		self.accept('enter', self.pauseUnpause)
@@ -282,6 +298,7 @@ class SMWorld(DirectObject):
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP)):
 			self.collectObj.destroy()
+			self.goatCounter.changeValue(1)
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the debug text.
