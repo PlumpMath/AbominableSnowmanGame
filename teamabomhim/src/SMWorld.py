@@ -281,18 +281,24 @@ class SMWorld(DirectObject):
 		
 		# TODO: Add out-of-bounds tests here.
 		
+		plPos = self.playerObj.getPosition()
+		px = plPos.getX()
+		py = plPos.getY()
+		
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
 			# print("col ground")
 			self.playerObj.setAirborneFlag(False)
 			self.playerObj.setFactor(1, 1, 1)
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.deathZone.node())):
+			print("Player confirmed #REKT")
+			self.playerObj.respawn()
+		
+		if(abs(px) > 255 or abs(py) > 255):
+			print("Player out of bounds!")
 			self.playerObj.respawn()
 		
 		if(not(self.playerObj.getAirborneFlag())):
-			playerPos = self.playerObj.getPosition()
-			px = playerPos.getX()
-			py = playerPos.getY()
 			th = self.getTerrainHeight(px, py)
 			self.playerObj.snapToTerrain(th, self.hmHeight)
 		
