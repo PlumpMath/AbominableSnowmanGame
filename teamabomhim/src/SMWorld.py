@@ -14,6 +14,7 @@ from SMCollisionHandler import SMCollisionHandler
 from SMLighting import SMLighting
 from SMCollect import SMCollect
 from SMBall import SMBall
+from SMAI import SMAI
 
 GRAVITY = 96
 
@@ -311,6 +312,7 @@ class SMWorld(DirectObject):
 	def update(self, task):
 		dt = globalClock.getDt()
 		self.worldBullet.doPhysics(dt)
+		self.SMAI.AIUpdate()
 		self.playerMove()
 		return task.cont
 
