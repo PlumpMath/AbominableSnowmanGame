@@ -312,7 +312,7 @@ class SMWorld(DirectObject):
 	def update(self, task):
 		dt = globalClock.getDt()
 		self.worldBullet.doPhysics(dt)
-		self.SMAI.AIUpdate()
+		# self.SMAI.AIUpdate()
 		self.playerMove()
 		return task.cont
 
