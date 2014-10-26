@@ -10,7 +10,7 @@ class Game(DirectObject):
 	def __init__(self):
 		print("LINK START")
 		self.textObj = SMText()
-		self.textObj.addText("test", "abom20141019")
+		self.textObj.addText("test", "abom20141025")
 		
 		self.world = SMWorld(self.gameState, "map01", -30, self.textObj)
 		

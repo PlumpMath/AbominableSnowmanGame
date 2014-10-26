@@ -15,6 +15,8 @@ from SMLighting import SMLighting
 from SMCollect import SMCollect
 from SMBall import SMBall
 from SMAI import SMAI
+from SMGUI import SMGUI
+from SMGUIElement import SMGUIElement
 
 GRAVITY = 96
 
@@ -29,39 +31,51 @@ class SMWorld(DirectObject):
 	
 		self.worldObj = self.setupWorld()
 		self.debugNode = self.setupDebug()
-		self.heightMap = self.setupHeightmap(mapName)
-		self.deathZone = self.setupDeathzone(deathHeight)
-		
-		
-		
 		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, -5, -8, 40)
 		self.playerNP = self.playerObj.getNodePath()
+		self.heightMap = self.setupHeightmap(mapName)
+		self.deathZone = self.setupDeathzone(deathHeight)
 		
 		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerNP)
 		self.ballNP = self.ballObj.getNodePath()
 		
+		# Key Handler
 		self.kh = SMKeyHandler()
+		
+		# Collision Handler
 		self.colObj = self.setupCollisionHandler()
+		
+		# Lighting
 		self.ligObj = SMLighting(Vec4(.4, .4, .4, 1), Vec3(-5, -5, -5), Vec4(2.0, 2.0, 2.0, 1.0))
 		
+		# Camera
 		self.camObj = SMCamera(0, 0, 0, self.playerObj.getNodePath())
 		self.camObj.setPos(0, -40, 10)
 		self.camObj.reparentTo(self.playerNP)
 		
+		# Collectables
 		self.collectObj = SMCollect(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ())
 		self.collectNP = self.collectObj.getNodePath()
 		
+		# GUI
+		self.GUI = SMGUI()
+		self.goatCounter = SMGUIElement("Goats: ", 3)
+		self.GUI.addElement("goats", self.goatCounter)
+		
+		# Survivor AI
 		self.SMAI = SMAI(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ(), "../res/models/goat.egg", "Flee", self.playerNP)	
 		print("AI Initialized")
 		
+		# Debug Text
 		self.textObj = tObj
 		self.textObj.addText("yetiPos", "Position: ")
+		self.textObj.addText("yetiVel", "Velocity: ")
 		self.textObj.addText("yetiFric", "Friction: ")
 		self.textObj.addText("terrHeight", "T Height: ")
 		
 		self.accept('b', self.spawnBall)
 
-                self.transition = Transitions(loader)
+		self.transition = Transitions(loader)
 
 		self.accept('escape', base.userExit)
 		self.accept('enter', self.pauseUnpause)
@@ -139,12 +153,7 @@ class SMWorld(DirectObject):
 		self.hmTerrain = GeoMipTerrain('gmTerrain')
 		self.hmTerrain.setHeightfield(hmImg)
 		self.hmTerrain.setBruteforce(True)
-		
-		self.hmTerrain.setNear(40)
-		self.hmTerrain.setFar(100)
-		self.hmTerrain.setFocalPoint(base.camera)
-		self.hmTerrain.setMinLevel(16)
-		
+		self.hmTerrain.setMinLevel(3) # 3 seems to be a nice balance between quality and minimal clipping.
 		self.hmTerrain.generate()
 		
 		# Let's improve performance, eh?
@@ -269,23 +278,33 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def doPlayerTests(self):
+		
+		# TODO: Add out-of-bounds tests here.
+		
+		plPos = self.playerObj.getPosition()
+		px = plPos.getX()
+		py = plPos.getY()
+		
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
 			# print("col ground")
 			self.playerObj.setAirborneFlag(False)
 			self.playerObj.setFactor(1, 1, 1)
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.deathZone.node())):
+			print("Player confirmed #REKT")
+			self.playerObj.respawn()
+		
+		if(abs(px) > 255 or abs(py) > 255):
+			print("Player out of bounds!")
 			self.playerObj.respawn()
 		
 		if(not(self.playerObj.getAirborneFlag())):
-			playerPos = self.playerObj.getPosition()
-			px = playerPos.getX()
-			py = playerPos.getY()
 			th = self.getTerrainHeight(px, py)
 			self.playerObj.snapToTerrain(th, self.hmHeight)
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP)):
 			self.collectObj.destroy()
+			self.goatCounter.changeValue(1)
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the debug text.
@@ -296,12 +315,17 @@ class SMWorld(DirectObject):
 		x = pos.getX()
 		y = pos.getY()
 		z = pos.getZ()
+		vel = self.playerObj.getVelocity()
+		vx = str(round(vel.getX(), 1))
+		vy = str(round(vel.getY(), 1))
+		vz = str(round(vel.getZ(), 1))
 		sx = str(round(x, 1))
 		sy = str(round(y, 1))
 		sz = str(round(z, 1))
 		fric = str(round(self.playerObj.getFriction(), 2))
 		tHeight = str(round(self.getTerrainHeight(x, y), 1))
 		self.textObj.editText("yetiPos", "Position: (" + sx + ", " + sy + ", " + sz + ")")
+		self.textObj.editText("yetiVel", "Velocity: (" + vx + ", " + vy + ", " + vz + ")")
 		self.textObj.editText("yetiFric", "Friction: " + fric)
 		self.textObj.editText("terrHeight", "T Height: " + tHeight)
 

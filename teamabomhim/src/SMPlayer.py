@@ -17,6 +17,7 @@ JUMP_FORCE = 8.0 * 100000
 STOP_DAMPING = 5
 JMP_STOP_DAMPING = 0.88
 TURN_DAMPING = 0.92
+SLIP_THRESHOLD = 0.30
 PNT = Point3(0,0,0)
 
 # Stuff for reading and displaying information from the friction map.
@@ -84,11 +85,13 @@ class SMPlayer():
 		self.bulletWorld.attachRigidBody(playerNP.node())
 		return playerNP
 	
+	
+	def getPlayerNode(self):
+		return playerNode
+	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Makes the player jump if they are not already jumping.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
-	def getPlayerNode(self):
-		return playerNode
 	
 	def jump(self):
 		# if(abs(self.getVelocity().getZ()) < 10):
@@ -141,14 +144,13 @@ class SMPlayer():
 	
 	def move(self, dir):
 		global MOVE_SPEED
+		
 		self.stop()
+		
 		if((self.getSpeed().getY() <= MAX_VEL_XY) and (self.getSpeed().getX() <= MAX_VEL_XY)):
 			xFactor = sin(self.getRotation() * DEG_TO_RAD)
 			yFactor = cos(self.getRotation() * DEG_TO_RAD)
 			self.setFactor(1, 1, 1)
-			#----------------------
-			#if in  friction doesn't happen
-			#----------------------
 			if(dir):
 				self.applyForce(Vec3((-MOVE_SPEED * globalClock.getDt()) * xFactor, (MOVE_SPEED * globalClock.getDt()) * yFactor, 0))
 			else:
@@ -183,18 +185,25 @@ class SMPlayer():
 		vx = self.getVelocity().getX()
 		vy = self.getVelocity().getY()
 		vz = self.getVelocity().getZ()
-		self.setFactor(0, 0, 1)
+		if(not(self.isAirborne)):
+			vz = 0
 		dt = globalClock.getDt()
-		self.setVelocity(Vec3((vx - (vx * STOP_DAMPING * dt)), (vy - (vy * STOP_DAMPING * dt)), vz))
+		if(self.fric < SLIP_THRESHOLD and self.getSpeed() > 5.0):
+			self.setFactor(1, 1, 1)
+			self.setVelocity(Vec3((vx - (vx * dt)), (vy - (vy * dt)), vz))
+		else:
+			self.setFactor(0, 0, 1)
+			self.setVelocity(Vec3((vx - (vx * STOP_DAMPING * dt)), (vy - (vy * STOP_DAMPING * dt)), vz))
+	
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Sets the player's position to the spawn position.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def respawn(self):
+		self.fric = 0.45
 		self.playerNP.setPos(self.startX, self.startY, self.startZ)
 		self.setVelocity(Vec3(0,0,0))
-		print("Player confirmed REKT.")
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Gets the player's friction value at its position.
