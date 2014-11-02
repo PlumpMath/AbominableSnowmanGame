@@ -38,7 +38,7 @@ class SMWorld(DirectObject):
 		self.heightMap = self.setupHeightmap(mapName)
 		self.deathZone = self.setupDeathzone(deathHeight)
 		
-		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerNP)
+		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerObj)
 		self.ballNP = self.ballObj.getNodePath()
 		
 		# Key Handler
@@ -95,22 +95,23 @@ class SMWorld(DirectObject):
 
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Respawns the yeti's snowball.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+		
+	def spawnBall(self):
+		self.ballObj.respawn()
+		
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Toggles the pause screen
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
-	def spawnBall(self):
-		pos = self.playerObj.getPosition()
-		x = pos.getX()
-		y = pos.getY()
-		z = pos.getZ()
-		self.ballObj.create(x,y,z)
 	
-        def pauseUnpause(self):
-                if taskMgr.hasTaskNamed('UpdateTask'):
-                        taskMgr.remove('UpdateTask')
-                        self.transition.fadeScreen(0.5)
-                else:
-                        taskMgr.add(self.update, 'UpdateTask')
-                        self.transition.noFade()
+	def pauseUnpause(self):
+			if taskMgr.hasTaskNamed('UpdateTask'):
+					taskMgr.remove('UpdateTask')
+					self.transition.fadeScreen(0.5)
+			else:
+					taskMgr.add(self.update, 'UpdateTask')
+					self.transition.noFade()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Sets up the world and returns a NodePath of the BulletWorld
@@ -303,12 +304,14 @@ class SMWorld(DirectObject):
 		
 		if self.kh.poll('w'):
 			self.playerObj.move(True)
+			if(self.ballObj.isRolling()):
+				self.ballObj.grow()
 		elif self.kh.poll('s'):
 			self.playerObj.move(False)
 		else:
 			self.playerObj.stop()
 		
-		
+
 		if (self.kh.poll(' ') and self.terrSteepness < 0.25):
 			self.playerObj.jump()
 		

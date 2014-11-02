@@ -1,53 +1,94 @@
-#this could be slimmed down but im lazy
-import direct.directbase.DirectStart
-from panda3d.core import Vec3, VBase3, Vec4, BitMask32, Point3, KeyboardButton, Filename, PNMImage, GeoMipTerrain
-from panda3d.core import LightRampAttrib, AmbientLight, DirectionalLight
-from panda3d.bullet import BulletWorld
-from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode
-from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
-from panda3d.bullet import ZUp
-from math import sin, cos, pi
-from direct.showbase.DirectObject import DirectObject
-from panda3d.bullet import BulletRigidBodyNode
-from panda3d.bullet import BulletSphereShape
+from panda3d.core import Vec3, Point3, NodePath
 
-MAXSCALE = 10
+from math import sin, cos, pi
+
+from panda3d.bullet import BulletRigidBodyNode
+from panda3d.bullet import BulletCylinderShape
+from panda3d.bullet import ZUp
+
+INIT_SCALE = 1.5
+MAX_SCALE = 9
+SCALE_RATE = 1.5
+TRANS_RATE = 1.2
+DEG_TO_RAD = pi/180
 
 class SMBall():
-	def __init__(self, wrld, wNP, playerNP):
-		self.playerNP = playerNP 
-		self.wrld = wrld
-		self.wNP = wNP
-		ballShape = BulletSphereShape(1)
+
+	def __init__(self, bWrld, wObj, pObj):
+		self.playerObj = pObj
+		self.worldBullet = bWrld
+		self.worldObj = wObj
+		self.rolledOnce = False
+		self.rollState = False
 		self.ballModel = loader.loadModel("../res/models/sphere.egg.pz")
-		self.ballModel.setH(90)
-		self.ballModel.setPos(0, 0, -1) # This is NOT the actual player position. Use playerNP instead.
-		self.ballModel.flattenLight()
-		self.ballNode = BulletRigidBodyNode("Sphere")
-		self.ballNode.setMass(1.0)
-		self.ballNode.addShape(ballShape)
-		#SNOWBALL!!!!!
-		self.ballNP = self.wNP.attachNewNode(self.ballNode)
-		self.ballNP.setH(0)
-		self.numSnoBall = 0
-		
-		self.wrld.attachRigidBody(self.ballNP.node())
-		# Without this set to 0,0,0, the Yeti would wobble like a Weeble but not fall down.
-		self.ballNode.setAngularFactor(Vec3(0,0,0))
+		self.ballModel.setScale(INIT_SCALE, INIT_SCALE, INIT_SCALE)
+		self.ballNP = NodePath()
+		self.ballRBody = NodePath()
+		print("Snowball initialized.")
 	
-		# Without this disabled, things will weld together after a certain amount of time. It's really annoying.
-		self.ballNode.setDeactivationEnabled(False)
-		print("ball initialized.")
-			
+	def setRolling(self, roll):
+		self.rollState = roll
+	
+	def isRolling(self):
+		return self.rollState
+	
 	def getNodePath(self):
 		return self.ballNP
 	
+	def respawn(self):
 	
-
+		# Drop the ball
+		if(self.isRolling()):
+			self.setRolling(False)
+			self.dropBall()
+		
+		# Make the ball
+		else:
+		
+			if(self.rolledOnce):
+				self.ballRBody.removeShape(self.ballShape)
+				self.ballModel.detachNode()
+			pos = self.playerObj.getPosition()
+			x = pos.getX()
+			y = pos.getY()
+			z = pos.getZ()
+			self.ballModel.setScale(INIT_SCALE, INIT_SCALE, INIT_SCALE)
+			self.ballNP = self.playerObj.getNodePath().attachNewNode(self.ballModel.node())
+			self.ballNP.setPos(0, 4, -5) # In front and and bit below the yeti.
+			self.setRolling(True)
 	
-	def create(self, x, y, z):
-		print(x,y,z)
-		self.ballNP.setPos(x, y, z)
-		self.ballModel.reparentTo(self.ballNP)
+	def dropBall(self):
+		self.ballNP.removeNode()
+		pos = self.playerObj.getPosition()
+		pNP = self.playerObj.getNodePath()
+		px = pos.getX()
+		py = pos.getY()
+		pz = pos.getZ()
+		size = self.ballModel.getScale().getX()
+		self.ballShape = BulletCylinderShape(size, size * 1.7, ZUp)
+		self.ballRBody = BulletRigidBodyNode()
+		self.ballRBody.setMass(0)
+		self.ballRBody.addShape(self.ballShape)
+		rbNP = self.worldObj.attachNewNode(self.ballRBody)
+		ph = self.playerObj.getRotation()
+		self.ballModel.setPos(0, 0, 0)
+		dx = -sin(ph * DEG_TO_RAD) * size * 3
+		dy = cos(ph * DEG_TO_RAD) * size * 3
+		self.ballModel.reparentTo(rbNP)
+		rbNP.setPos(px + dx, py + dy, pz)
+		self.worldBullet.attachRigidBody(self.ballRBody)
+		self.rolledOnce = True
 	
-	
+	def grow(self):
+		size = self.ballModel.getScale()
+		sx = size.getX()
+		if(sx < MAX_SCALE):
+			pos = self.ballModel.getPos()
+			px = pos.getX()
+			py = pos.getY()
+			pz = pos.getZ()
+			sy = size.getY()
+			sz = size.getZ()
+			dt = globalClock.getDt()
+			self.ballModel.setScale(sx + (SCALE_RATE * dt), sy + (SCALE_RATE * dt), sz + (SCALE_RATE * dt))
+			self.ballModel.setPos(px, py + (TRANS_RATE * dt), pz + (TRANS_RATE * dt))

@@ -35,5 +35,6 @@ class SMCollect():
 		return collectNode
 		
 	def destroy(self):
+		self.world.removeGhost(self.collectGN)
 		self.collectNP.removeNode()
 		

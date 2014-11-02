@@ -49,6 +49,7 @@ class SMPlayer():
 		self.terrainType = -1
 		self.velocity = Vec3(0,0,0)
 		self.rotation = self.playerNP.getH()
+		self.rollingSnowball = False
 		self.fric = 0.45
 		print("Player initialized.")
 	
@@ -208,6 +209,17 @@ class SMPlayer():
 		self.fric = 0.45
 		self.playerNP.setPos(self.startX, self.startY, self.startZ)
 		self.setVelocity(Vec3(0,0,0))
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Returns true if the player is rolling a snowball.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def hasSnowball(self):
+		return self.rollingSnowball
+	
+	def setRolling(self, roll):
+		self.rollingSnowball = roll
+	
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Gets the player's friction value at its position.
