@@ -1,4 +1,3 @@
-#this could be slimmed down but im lazy
 import direct.directbase.DirectStart
 from panda3d.core import Vec3, VBase3, Vec4, BitMask32, Point3, KeyboardButton, Filename, PNMImage, GeoMipTerrain
 from panda3d.core import LightRampAttrib, AmbientLight, DirectionalLight
@@ -12,21 +11,21 @@ from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletSphereShape
 
 MAXSCALE = 10
+scale = 1
 
-class SMBall():
+class NotSMBall():
 	def __init__(self, wrld, wNP, playerNP):
 		self.playerNP = playerNP 
 		self.wrld = wrld
 		self.wNP = wNP
-		ballShape = BulletSphereShape(1)
+		ballShape = BulletSphereShape(scale)
 		self.ballModel = loader.loadModel("../res/models/sphere.egg.pz")
 		self.ballModel.setH(90)
 		self.ballModel.setPos(0, 0, -1) # This is NOT the actual player position. Use playerNP instead.
 		self.ballModel.flattenLight()
-		self.ballNode = BulletRigidBodyNode("Sphere")
-		self.ballNode.setMass(1.0)
+		self.ballNode = BulletRigidBodyNode("stationarySphere")
+		self.ballNode.setMass(0)
 		self.ballNode.addShape(ballShape)
-		
 		#SNOWBALL!!!!!
 		self.ballNP = self.wNP.attachNewNode(self.ballNode)
 		self.ballNP.setH(0)
@@ -38,22 +37,22 @@ class SMBall():
 	
 		# Without this disabled, things will weld together after a certain amount of time. It's really annoying.
 		self.ballNode.setDeactivationEnabled(False)
-		print("ball initialized.")
-			
+		print("not ball initialized.")
 	def getNodePath(self):
 		return self.ballNP
-		
-	def destroy(self):
-		if(self.numSnoBall < 0):
-			self.ballModel.removeNode()
-			
-			
-
 	
-	def create(self, x, y, z, scale):
-		print(x,y,z,scale)
-		ballShape = BulletSphereShape(scale)
+	def getScale(self):
+		return scale
+		
+	def create(self, x, y, z):
+		print(x,y,z)
+		self.numSnoBall = self.numSnoBall + 1 
 		self.ballNP.setPos(x, y, z)
 		self.ballModel.reparentTo(self.ballNP)
 	
-	
+	def reparentTo(self, nodePath):
+		base.cam.reparentTo(nodePath)
+		
+	def destroy(self):
+		if(self.numSnoBall < 0):
+			self.ballmodel.removeNode()

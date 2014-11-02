@@ -4,9 +4,10 @@ Alright, here's the new layout of our repository:
 teamabomhim/
 	maps/
 	res/
+		ambient/
 		bgm/
 		models/
-		sfx/
+		sound/
 	src/
 	
 > teamabomhim
@@ -18,6 +19,9 @@ teamabomhim/
 
 > res
 	Only folders. We can add more if needed.
+
+> ambient
+	Ambient sounds such as howling wind, fire crackling, cave dripping, etc.
 	
 > bgm
 	Background music files (no sound effects)
@@ -25,8 +29,8 @@ teamabomhim/
 > models
 	.egg, .x, or .bam files along with their textures. Textures should be named "<Model Name>-tex.png"
 
-> sfx
-	Sound effects
+> sound
+	Sound effects only
 
 > src
 	.py or .pyc source code files.
