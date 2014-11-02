@@ -30,9 +30,10 @@ class SMWorld(DirectObject):
 	
 	def __init__(self, gameState, mapName, deathHeight, tObj, aObj):
 	
+		self.audioMgr = aObj
 		self.worldObj = self.setupWorld()
 		self.debugNode = self.setupDebug()
-		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, -5, -8, 40)
+		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, -5, -8, 40, self.audioMgr)
 		self.playerNP = self.playerObj.getNodePath()
 		self.heightMap = self.setupHeightmap(mapName)
 		self.deathZone = self.setupDeathzone(deathHeight)
@@ -85,7 +86,10 @@ class SMWorld(DirectObject):
 		
 		self.pauseUnpause()
 		
-		# self.printSceneGraph()
+		
+		self.printSceneGraph()
+		
+		self.audioMgr.playBGM("snowmanWind")
 		
 		print("World initialized.")
 
@@ -117,6 +121,10 @@ class SMWorld(DirectObject):
 		self.worldBullet.setGravity(Vec3(0, 0, -GRAVITY))
 		self.terrSteepness = -1
 		wNP = render.attachNewNode('WorldNode')
+		
+		self.audioMgr.loadSFX("snowCrunch01")
+		self.audioMgr.loadBGM("snowmanWind")
+		
 		return wNP
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -165,13 +173,13 @@ class SMWorld(DirectObject):
 		
 		# self.hmTerrain.makeSlopeImage().write(Filename("slopeImg.png"))
 		
-		# self.hmTerrain.setBruteforce(True) # I don't think this is actually needed. 
+		self.hmTerrain.setBruteforce(True) # I don't think this is actually needed. 
 		
 		# self.hmTerrain.setNear(40)
 		# self.hmTerrain.setFar(200)
 		
 		# Let's improve performance, eh?
-		# self.hmTerrain.setMinLevel(3) # Woah, hang on. I think I improved performance without flattening.
+		self.hmTerrain.setMinLevel(3) # Woah, hang on. I think I improved performance without flattening.
 		self.hmTerrain.setBlockSize(128)  # This does a pretty good job.
 		
 		self.hmTerrain.generate()
@@ -323,7 +331,8 @@ class SMWorld(DirectObject):
 		rayYetiB = Point3(px, py, pz - 300)
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
-			# print("col ground")
+			if(self.playerObj.getAirborneFlag()):
+				self.audioMgr.playSFX("snowCrunch01")
 			self.playerObj.setAirborneFlag(False)
 			self.playerObj.setFactor(1, 1, 1)
 		

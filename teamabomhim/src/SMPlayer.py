@@ -19,6 +19,8 @@ JMP_STOP_DAMPING = 0.88
 TURN_DAMPING = 0.92
 SLIP_THRESHOLD = 0.30
 PNT = Point3(0,0,0)
+SNOW_HEIGHT = -3.4
+SOLID_HEIGHT = -1.6
 
 # Stuff for reading and displaying information from the friction map.
 # FRICTION_LBL = OnscreenText(text = 'coefficient of friction: ', pos = (0, 0), scale = 0.1)
@@ -34,13 +36,14 @@ class SMPlayer():
 	# (BulletWorld, NodePath of BulletWorld, int, int, int)
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def __init__(self, wrld, wNP, smWrld, startX, startY, startZ):
+	def __init__(self, wrld, wNP, smWrld, startX, startY, startZ, audMgr):
 		self.bulletWorld = wrld
 		self.worldNP = wNP
 		self.smWorld = smWrld
 		self.startX = startX
 		self.startY = startY
 		self.startZ = startZ
+		self.audioMgr = audMgr
 		self.playerNP = self.setupPlayer(self.startX, self.startY, self.startZ)
 		self.isAirborne = True
 		self.terrainType = -1
@@ -66,7 +69,7 @@ class SMPlayer():
 		yetiShape = BulletCapsuleShape(yetiRadius, yetiHeight - 2 * yetiRadius, ZUp)
 		yetiModel = loader.loadModel("../res/models/yeti.egg")
 		yetiModel.setH(90)
-		yetiModel.setPos(0, 0, -1.8) # This is NOT the actual player position. Use playerNP instead.
+		yetiModel.setPos(0, 0, SNOW_HEIGHT) # This is NOT the actual player position. Use playerNP instead.
 		yetiModel.flattenLight()
 		playerNode = BulletRigidBodyNode("Player")
 		playerNode.setMass(MASS)
@@ -99,9 +102,10 @@ class SMPlayer():
 		if(self.isAirborne == False):
 			v = self.getVelocity()
 			self.setAirborneFlag(True)
-			print("Jump successful")
+			# print("Jump successful")
 			self.setFactor(1, 1, 1)
 			self.setVelocity(Vec3(v.getX(), v.getY(), 0))
+			# self.audioMgr.playSFX("yetiJump01")
 			self.applyForce(Vec3(0, 0, JUMP_FORCE))
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
