@@ -66,7 +66,7 @@ class SMPlayer():
 		yetiShape = BulletCapsuleShape(yetiRadius, yetiHeight - 2 * yetiRadius, ZUp)
 		yetiModel = loader.loadModel("../res/models/yeti.egg")
 		yetiModel.setH(90)
-		yetiModel.setPos(0, 0, -1) # This is NOT the actual player position. Use playerNP instead.
+		yetiModel.setPos(0, 0, -1.8) # This is NOT the actual player position. Use playerNP instead.
 		yetiModel.flattenLight()
 		playerNode = BulletRigidBodyNode("Player")
 		playerNode.setMass(MASS)
@@ -174,7 +174,7 @@ class SMPlayer():
 		pos = self.getPosition()
 		x = pos.getX()
 		y = pos.getY()
-		self.playerNP.setPos(x, y, (h - (th / 2)) + 3.7)
+		self.playerNP.setPos(x, y, (h - (th / 2)) + 4.5)
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Slows down and stops the player's horizontal movement.
@@ -213,11 +213,21 @@ class SMPlayer():
 		return self.fric
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
-	# Gets the player's current Vec3 position.
+	# Gets the player's current Point3 position.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def getPosition(self):
 		return self.playerNP.getPos()
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets the player's current Point3 position.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def setPosition(self, pos):
+		x = pos.getX()
+		y = pos.getY()
+		z = pos.getZ()
+		self.playerNP.setPos(x, y, z)
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Sets the player's movement factors

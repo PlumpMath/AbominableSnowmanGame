@@ -3,8 +3,11 @@ from direct.showbase.DirectObject import DirectObject
 from direct.gui.OnscreenText import OnscreenText
 from direct.gui.DirectGui import *
 from panda3d.core import TextNode, NodePath
+from pandac.PandaModules import PStatCollector
+
 from SMWorld import SMWorld
 from SMText import SMText
+from SMAudioManager import SMAudioManager
 
 class Game(DirectObject):
 
@@ -13,7 +16,9 @@ class Game(DirectObject):
 	def __init__(self):
 		print("LINK START")
 		self.textObj = SMText()
-		self.textObj.addText("test", "abom20141025")
+		self.textObj.addText("test", "abom20141101")
+		
+		self.audioMgr = SMAudioManager()
 
                 self.title = OnscreenText(text = "The Abominable Snowman of the Himalayas",
                                                pos = (0.0, 0.5), scale = 0.1,fg=(1,0.5,0.5,1),
@@ -35,7 +40,7 @@ class Game(DirectObject):
         def newGame(self):
                 self.hideMenu()
                 # Loading screens will be added here in place of direct map invocation.
-                self.world = SMWorld(self.gameState, "map01", -30, self.textObj)
+                self.world = SMWorld(self.gameState, "map01", -30, self.textObj, self.audioMgr)
 
         def continueGame(self):
                 # When saving game state is implemented it will be added here.
@@ -56,5 +61,7 @@ class Game(DirectObject):
                 self.continueBtn.show()
                 self.quitBtn.show()
 
+# PStatClient.connect()
+base.setFrameRateMeter(True)
 g = Game()
 run()

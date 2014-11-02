@@ -18,7 +18,7 @@ class SMText():
 		self.text = {}
 	
 	def addText(self, name, message):
-		textObj = OnscreenText(text = message, style = 1, fg = (0,0,0,1), pos = (TEXT_LEFT, TEXT_TOP - (TEXT_MARGIN * self.textLine)), align = TextNode.ALeft, scale = .05)
+		textObj = OnscreenText(text = message, style = 1, fg = (1,1,1,1), bg = (0,0,0,1), pos = (TEXT_LEFT, TEXT_TOP - (TEXT_MARGIN * self.textLine)), align = TextNode.ALeft, scale = .05)
 		self.textLine += 1
 		self.text[name] = textObj
 		

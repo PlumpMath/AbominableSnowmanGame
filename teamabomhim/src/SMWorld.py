@@ -1,8 +1,9 @@
-from panda3d.core import BitMask32, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage, VBase4
+from panda3d.core import BitMask32, Point3, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage, VBase4
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode, BulletGhostNode
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
 from panda3d.bullet import ZUp
+
 from direct.showbase.DirectObject import DirectObject
 from direct.showbase.Transitions import Transitions
 
@@ -27,7 +28,7 @@ class SMWorld(DirectObject):
 	# (Game state, Map name, Height of death plane)
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def __init__(self, gameState, mapName, deathHeight, tObj):
+	def __init__(self, gameState, mapName, deathHeight, tObj, aObj):
 	
 		self.worldObj = self.setupWorld()
 		self.debugNode = self.setupDebug()
@@ -59,8 +60,8 @@ class SMWorld(DirectObject):
 		
 		# GUI
 		self.GUI = SMGUI()
-		self.goatCounter = SMGUIElement("Goats: ", 3)
-		self.GUI.addElement("goats", self.goatCounter)
+		self.snowflakeCounter = SMGUIElement("Snowflakes: ", 3)
+		self.GUI.addElement("snowflakes", self.snowflakeCounter)
 		
 		# Survivor AI
 		self.SMAI = SMAI(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ(), "../res/models/goat.egg", "Flee", self.playerNP)	
@@ -72,6 +73,7 @@ class SMWorld(DirectObject):
 		self.textObj.addText("yetiVel", "Velocity: ")
 		self.textObj.addText("yetiFric", "Friction: ")
 		self.textObj.addText("terrHeight", "T Height: ")
+		self.textObj.addText("terrSteepness", "Steepness: ")
 		
 		self.accept('b', self.spawnBall)
 
@@ -79,8 +81,11 @@ class SMWorld(DirectObject):
 
 		self.accept('escape', base.userExit)
 		self.accept('enter', self.pauseUnpause)
+		self.accept('f1', self.toggleDebug)
 		
 		self.pauseUnpause()
+		
+		# self.printSceneGraph()
 		
 		print("World initialized.")
 
@@ -110,6 +115,7 @@ class SMWorld(DirectObject):
 	def setupWorld(self):
 		self.worldBullet = BulletWorld()
 		self.worldBullet.setGravity(Vec3(0, 0, -GRAVITY))
+		self.terrSteepness = -1
 		wNP = render.attachNewNode('WorldNode')
 		return wNP
 		
@@ -125,8 +131,12 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def setupDebug(self):
-		debug = DebugNode()
-		debugNP = debug.getDebugNode()
+		debug = BulletDebugNode()
+		debug.showWireframe(False)
+		debug.showConstraints(True)
+		debug.showBoundingBoxes(True)
+		debug.showNormals(True)
+		debugNP = render.attachNewNode(debug)
 		self.worldBullet.setDebugNode(debugNP.node())
 		debugNP.hide()
 		return debugNP
@@ -152,23 +162,31 @@ class SMWorld(DirectObject):
 		self.hmOffset = hmImg.getXSize() / 2.0 - 0.5
 		self.hmTerrain = GeoMipTerrain('gmTerrain')
 		self.hmTerrain.setHeightfield(hmImg)
-		self.hmTerrain.setBruteforce(True)
-		self.hmTerrain.setMinLevel(3) # 3 seems to be a nice balance between quality and minimal clipping.
-		self.hmTerrain.generate()
+		
+		# self.hmTerrain.makeSlopeImage().write(Filename("slopeImg.png"))
+		
+		# self.hmTerrain.setBruteforce(True) # I don't think this is actually needed. 
+		
+		# self.hmTerrain.setNear(40)
+		# self.hmTerrain.setFar(200)
 		
 		# Let's improve performance, eh?
-		self.hmTerrain.getRoot().flattenStrong()
-		self.hmTerrain.getRoot().analyze()
+		# self.hmTerrain.setMinLevel(3) # Woah, hang on. I think I improved performance without flattening.
+		self.hmTerrain.setBlockSize(128)  # This does a pretty good job.
+		
+		self.hmTerrain.generate()
 		
 		self.hmTerrainNP = self.hmTerrain.getRoot()
 		self.hmTerrainNP.setSz(self.hmHeight)
 		self.hmTerrainNP.setPos(-self.hmOffset, -self.hmOffset, -self.hmHeight / 2.0)
-		self.hmTerrainNP.reparentTo(render)
+		self.hmTerrainNP.flattenStrong() # This only reduces the number of nodes; nothing to do with polys.
+		self.hmTerrainNP.analyze()
 
 		# Here begins the scenery mapping
 		tree = loader.loadModel("../res/models/tree_1.egg")
 		rock = loader.loadModel("../res/models/rock_1.egg")
 		texpk = loader.loadTexture(scmPath).peek()
+		
 		for i in range(0, texpk.getXSize()):
 			for j in range(0, texpk.getYSize()):
 				color = VBase4(0, 0, 0, 0)
@@ -183,6 +201,9 @@ class SMWorld(DirectObject):
 					newRock.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					rock.instanceTo(newRock)
 
+
+		self.hmTerrainNP.reparentTo(render)
+		
 		# Here begins the attribute mapping
 		ts = TextureStage("stage-alpha")
 		ts.setSort(0)
@@ -216,6 +237,8 @@ class SMWorld(DirectObject):
 		self.hmTerrainNP.setTexture(ts, loader.loadTexture("../res/textures/snow_tex_1.png"))
 		self.hmTerrainNP.setTexScale(ts, 32, 32)
 
+		
+		
 		return hmNode
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -238,6 +261,17 @@ class SMWorld(DirectObject):
 	def setupCollisionHandler(self):
 		colHand = SMCollisionHandler(self.worldBullet)
 		return colHand
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Toggles showing bounding boxes.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def toggleDebug(self):
+		if self.debugNode.isHidden():
+			self.debugNode.show()
+		else:
+			self.debugNode.hide()
+	
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Returns the terrain height of coordinates x and y from the heightmap.
@@ -267,10 +301,12 @@ class SMWorld(DirectObject):
 			self.playerObj.stop()
 		
 		
-		if self.kh.poll(' '):
+		if (self.kh.poll(' ') and self.terrSteepness < 0.25):
 			self.playerObj.jump()
 		
 		self.camObj.lookAt(self.playerObj.getNodePath())
+		# self.hmTerrain.setFocalPoint(self.playerObj.getPosition())
+		# self.hmTerrain.update()
 		self.updateStats()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -279,11 +315,12 @@ class SMWorld(DirectObject):
 	
 	def doPlayerTests(self):
 		
-		# TODO: Add out-of-bounds tests here.
-		
 		plPos = self.playerObj.getPosition()
 		px = plPos.getX()
 		py = plPos.getY()
+		pz = plPos.getZ()
+		rayYetiA = Point3(px, py, pz)
+		rayYetiB = Point3(px, py, pz - 300)
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
 			# print("col ground")
@@ -304,8 +341,14 @@ class SMWorld(DirectObject):
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP)):
 			self.collectObj.destroy()
-			self.goatCounter.changeValue(1)
-
+			self.snowflakeCounter.changeValue(1)
+		
+		self.downRayTest = self.worldBullet.rayTestClosest(rayYetiA, rayYetiB).getHitNormal()
+		rx = self.downRayTest.getX()
+		ry = self.downRayTest.getY()
+		rz = self.downRayTest.getZ()
+		self.terrSteepness = 1.0 - rz
+		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the debug text.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -322,12 +365,16 @@ class SMWorld(DirectObject):
 		sx = str(round(x, 1))
 		sy = str(round(y, 1))
 		sz = str(round(z, 1))
+		rx = str(round(self.downRayTest.getX(), 2))
+		ry = str(round(self.downRayTest.getY(), 2))
+		rz = str(round(self.terrSteepness, 2))
 		fric = str(round(self.playerObj.getFriction(), 2))
 		tHeight = str(round(self.getTerrainHeight(x, y), 1))
 		self.textObj.editText("yetiPos", "Position: (" + sx + ", " + sy + ", " + sz + ")")
 		self.textObj.editText("yetiVel", "Velocity: (" + vx + ", " + vy + ", " + vz + ")")
 		self.textObj.editText("yetiFric", "Friction: " + fric)
 		self.textObj.editText("terrHeight", "T Height: " + tHeight)
+		self.textObj.editText("terrSteepness", "Steepness: " + rz)
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the world. Called every frame.

@@ -16,7 +16,7 @@ class SMCollect():
 	def __init__(self, world, worldNP, sx, sy, sz):
 		self.world = world
 		self.worldNP = worldNP
-		self.collectShape = BulletBoxShape(Vec3(12, 12, 3))
+		self.collectShape = BulletBoxShape(Vec3(3, 3, 3))
 		self.collectGN = BulletGhostNode('Box')
 		self.collectGN.addShape(self.collectShape)
 		self.collectNP = self.create(sx + 100, sy + 50, sz - 20, self.collectGN)
@@ -30,7 +30,7 @@ class SMCollect():
 		collectNode.setPos((x,y,z))
 		collectNode.setCollideMask(BitMask32(0x0f))
 		self.world.attachGhost(ghostNode)
-		visualCN = loader.loadModel("../res/models/goat.egg")
+		visualCN = loader.loadModel("../res/models/snowflake.egg")
 		visualCN.reparentTo(collectNode)
 		return collectNode
 		
