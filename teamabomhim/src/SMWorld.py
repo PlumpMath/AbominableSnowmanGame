@@ -155,7 +155,7 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def setupHeightmap(self, name):
-		self.hmHeight = 80
+		self.hmHeight = 120
 		hmPath = "../maps/" + name + "-h.png"
 		imPath = "../maps/" + name + "-i.png"
 		smPath = "../maps/" + name + "-s.png"
