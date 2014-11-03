@@ -25,3 +25,6 @@ class SMCamera():
 	
 	def setPos(self, x, y, z):
 		base.cam.setPos(x, y, z)
+
+		
+

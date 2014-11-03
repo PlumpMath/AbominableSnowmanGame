@@ -1,4 +1,5 @@
-from panda3d.core import BitMask32, Point3, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage, VBase4
+from panda3d.core import BitMask32, Point2, Point3, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage, VBase4
+from panda3d.core import WindowProperties
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode, BulletGhostNode
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
@@ -10,7 +11,9 @@ from direct.showbase.Transitions import Transitions
 from DebugNode import DebugNode
 from SMPlayer import SMPlayer
 from SMKeyHandler import SMKeyHandler
-from SMCamera import SMCamera
+
+from SMCameraDev import SMCamera # Was "from SMCamera [...]"
+
 from SMCollisionHandler import SMCollisionHandler
 from SMLighting import SMLighting
 from SMCollect import SMCollect
@@ -43,6 +46,7 @@ class SMWorld(DirectObject):
 		
 		# Key Handler
 		self.kh = SMKeyHandler()
+		self.lastMousePos = self.kh.getMouse()
 		
 		# Collision Handler
 		self.colObj = self.setupCollisionHandler()
@@ -51,9 +55,11 @@ class SMWorld(DirectObject):
 		self.ligObj = SMLighting(Vec4(.4, .4, .4, 1), Vec3(-5, -5, -5), Vec4(2.0, 2.0, 2.0, 1.0))
 		
 		# Camera
-		self.camObj = SMCamera(0, 0, 0, self.playerObj.getNodePath())
-		self.camObj.setPos(0, -40, 10)
-		self.camObj.reparentTo(self.playerNP)
+		# self.camObj = SMCamera(0, 0, 0, self.playerObj.getNodePath())
+		self.camObj = SMCamera(self.playerObj)
+		self.cameraControl = False
+		# self.camObj.setPos(0, -40, 10)
+		# self.camObj.reparentTo(self.playerNP)
 		
 		# Collectables
 		self.collectObj = SMCollect(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ())
@@ -83,9 +89,15 @@ class SMWorld(DirectObject):
 		self.accept('escape', base.userExit)
 		self.accept('enter', self.pauseUnpause)
 		self.accept('f1', self.toggleDebug)
+		self.accept('mouse1', self.enableCameraControl)
+		self.accept('mouse1-up', self.disableCameraControl)
 		
 		self.pauseUnpause()
 		
+		base.disableMouse()
+		props = WindowProperties()
+		# props.setCursorHidden(True)
+		base.win.requestProperties(props)
 		
 		self.printSceneGraph()
 		
@@ -94,12 +106,19 @@ class SMWorld(DirectObject):
 		print("World initialized.")
 
 
+	def enableCameraControl(self):
+		self.cameraControl = True
+	
+	def disableCameraControl(self):
+		self.cameraControl = False
+	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Respawns the yeti's snowball.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 		
 	def spawnBall(self):
-		self.ballObj.respawn()
+		if(not(self.playerObj.getAirborneFlag())):
+			self.ballObj.respawn()
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Toggles the pause screen
@@ -304,6 +323,7 @@ class SMWorld(DirectObject):
 		
 		if self.kh.poll('w'):
 			self.playerObj.move(True)
+			# self.camObj.rotateTowards(90)
 			if(self.ballObj.isRolling()):
 				self.ballObj.grow()
 		elif self.kh.poll('s'):
@@ -311,11 +331,21 @@ class SMWorld(DirectObject):
 		else:
 			self.playerObj.stop()
 		
+		if(self.cameraControl):
+			newMousePos = self.kh.getMouse()
+			mx = newMousePos.getX()
+			self.camObj.rotateCamera(mx)
+			self.camObj.calculatePosition()
+			
+		base.win.movePointer(0, 400, 300)
+		
+		
 
-		if (self.kh.poll(' ') and self.terrSteepness < 0.25):
+		if(self.kh.poll(' ') and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
 			self.playerObj.jump()
 		
-		self.camObj.lookAt(self.playerObj.getNodePath())
+		# self.camObj.lookAt(self.playerObj.getNodePath())
+
 		# self.hmTerrain.setFocalPoint(self.playerObj.getPosition())
 		# self.hmTerrain.update()
 		self.updateStats()
