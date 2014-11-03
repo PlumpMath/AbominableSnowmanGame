@@ -1,4 +1,6 @@
-from panda3d.core import KeyboardButton
+from panda3d.core import KeyboardButton, Point2
+
+# Key list here: https://www.panda3d.org/dox/cxx/html/class_keyboard_button.html
 
 class SMKeyHandler():
 	
@@ -9,3 +11,13 @@ class SMKeyHandler():
 			return True
 		else:
 			return False
+
+	def getMouse(self):
+		if base.mouseWatcherNode.hasMouse():
+			x = base.mouseWatcherNode.getMouseX()
+			y = base.mouseWatcherNode.getMouseY()
+		else:
+			x = 0
+			y = 0
+		return Point2(x, y)
+		
