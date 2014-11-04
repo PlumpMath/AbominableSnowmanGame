@@ -71,7 +71,7 @@ class SMWorld(DirectObject):
 		self.GUI.addElement("snowflakes", self.snowflakeCounter)
 		
 		# Survivor AI
-		self.SMAI = SMAI(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ(), "../res/models/goat.egg", "Flee", self.playerNP)	
+		# self.SMAI = SMAI(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ(), "../res/models/goat.egg", "Flee", self.playerNP)	
 		print("AI Initialized")
 		
 		# Debug Text
