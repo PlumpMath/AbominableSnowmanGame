@@ -20,6 +20,7 @@ class SMBall():
 		self.worldObj = wObj
 		self.rolledOnce = False
 		self.rollState = False
+		self.ballExists = False
 		self.ballModel = loader.loadModel("../res/models/sphere.egg.pz")
 		self.ballModel.setScale(INIT_SCALE, INIT_SCALE, INIT_SCALE)
 		self.ballNP = NodePath()
@@ -31,7 +32,13 @@ class SMBall():
 	
 	def isRolling(self):
 		return self.rollState
+
+	def exists(self):
+		return self.ballExists
 	
+	def getRigidbody(self):
+		return self.ballRBody
+		
 	def getNodePath(self):
 		return self.ballNP
 	
@@ -44,7 +51,6 @@ class SMBall():
 		
 		# Make the ball
 		else:
-		
 			if(self.rolledOnce):
 				self.ballRBody.removeShape(self.ballShape)
 				self.ballModel.detachNode()
@@ -56,6 +62,7 @@ class SMBall():
 			self.ballNP = self.playerObj.getNodePath().attachNewNode(self.ballModel.node())
 			self.ballNP.setPos(0, 4, -5) # In front and and bit below the yeti.
 			self.setRolling(True)
+			self.ballExists = False
 	
 	def dropBall(self):
 		self.ballNP.removeNode()
@@ -78,6 +85,7 @@ class SMBall():
 		rbNP.setPos(px + dx, py + dy, pz)
 		self.worldBullet.attachRigidBody(self.ballRBody)
 		self.rolledOnce = True
+		self.ballExists = True
 	
 	def grow(self):
 		size = self.ballModel.getScale()

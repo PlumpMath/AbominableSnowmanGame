@@ -19,8 +19,8 @@ JMP_STOP_DAMPING = 0.88
 TURN_DAMPING = 0.92
 SLIP_THRESHOLD = 0.30
 PNT = Point3(0,0,0)
-SNOW_HEIGHT = -3.4
-SOLID_HEIGHT = -1.6
+SNOW_HEIGHT = -2.1
+SOLID_HEIGHT = -1.8
 
 # Stuff for reading and displaying information from the friction map.
 # FRICTION_LBL = OnscreenText(text = 'coefficient of friction: ', pos = (0, 0), scale = 0.1)

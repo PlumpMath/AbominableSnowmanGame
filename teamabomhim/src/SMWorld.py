@@ -96,10 +96,10 @@ class SMWorld(DirectObject):
 		
 		base.disableMouse()
 		props = WindowProperties()
-		# props.setCursorHidden(True)
+		props.setCursorHidden(True)
 		base.win.requestProperties(props)
 		
-		self.printSceneGraph()
+		# self.printSceneGraph()
 		
 		self.audioMgr.playBGM("snowmanWind")
 		
@@ -363,10 +363,24 @@ class SMWorld(DirectObject):
 		rayYetiA = Point3(px, py, pz)
 		rayYetiB = Point3(px, py, pz - 300)
 		
+		self.downRayTest = self.worldBullet.rayTestClosest(rayYetiA, rayYetiB).getHitNormal()
+		rx = self.downRayTest.getX()
+		ry = self.downRayTest.getY()
+		rz = self.downRayTest.getZ()
+		self.terrSteepness = 1.0 - rz
+		
+		# Redo collision flags later
+		tempFlag = False
+		
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
 			if(self.playerObj.getAirborneFlag()):
 				self.audioMgr.playSFX("snowCrunch01")
 			self.playerObj.setAirborneFlag(False)
+			self.playerObj.setFactor(1, 1, 1)
+		
+		if(self.ballObj.exists() and self.colObj.didCollide(self.playerNP.node(), self.ballObj.getRigidbody())):
+			self.playerObj.setAirborneFlag(False)
+			tempFlag = True
 			self.playerObj.setFactor(1, 1, 1)
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.deathZone.node())):
@@ -377,19 +391,14 @@ class SMWorld(DirectObject):
 			print("Player out of bounds!")
 			self.playerObj.respawn()
 		
-		if(not(self.playerObj.getAirborneFlag())):
+		if(not(self.playerObj.getAirborneFlag()) and not(tempFlag)):
 			th = self.getTerrainHeight(px, py)
 			self.playerObj.snapToTerrain(th, self.hmHeight)
 		
 		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP)):
 			self.collectObj.destroy()
 			self.snowflakeCounter.changeValue(1)
-		
-		self.downRayTest = self.worldBullet.rayTestClosest(rayYetiA, rayYetiB).getHitNormal()
-		rx = self.downRayTest.getX()
-		ry = self.downRayTest.getY()
-		rz = self.downRayTest.getZ()
-		self.terrSteepness = 1.0 - rz
+
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the debug text.
