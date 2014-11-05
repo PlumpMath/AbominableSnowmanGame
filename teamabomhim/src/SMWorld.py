@@ -320,10 +320,19 @@ class SMWorld(DirectObject):
 			self.playerObj.turn(True)
 		elif self.kh.poll('d'):
 			self.playerObj.turn(False)
+		elif(self.cameraControl):
+			newMousePos = self.kh.getMouse()
+			mx = newMousePos.getX()
+			self.camObj.rotateCamera(mx)
+			self.camObj.calculatePosition()
+		
+		# print(self.camObj.getAngle())
 		
 		if self.kh.poll('w'):
 			self.playerObj.move(True)
-			# self.camObj.rotateTowards(90)
+			
+			self.camObj.rotateTowards(90)
+			
 			if(self.ballObj.isRolling()):
 				self.ballObj.grow()
 		elif self.kh.poll('s'):
@@ -331,11 +340,7 @@ class SMWorld(DirectObject):
 		else:
 			self.playerObj.stop()
 		
-		if(self.cameraControl):
-			newMousePos = self.kh.getMouse()
-			mx = newMousePos.getX()
-			self.camObj.rotateCamera(mx)
-			self.camObj.calculatePosition()
+		
 			
 		base.win.movePointer(0, 400, 300)
 		
