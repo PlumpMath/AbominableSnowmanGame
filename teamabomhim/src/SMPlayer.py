@@ -22,13 +22,6 @@ PNT = Point3(0,0,0)
 SNOW_HEIGHT = -2.1
 SOLID_HEIGHT = -1.8
 
-# Stuff for reading and displaying information from the friction map.
-# FRICTION_LBL = OnscreenText(text = 'coefficient of friction: ', pos = (0, 0), scale = 0.1)
-TEXPK = loader.loadTexture('../maps/map01-f.png').peek()
-TXX = TEXPK.getXSize()
-TXY = TEXPK.getYSize()
-CALC_COF = lambda x: 0.4 * x + 0.05
-
 class SMPlayer():
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -50,7 +43,20 @@ class SMPlayer():
 		self.velocity = Vec3(0,0,0)
 		self.rotation = self.playerNP.getH()
 		self.rollingSnowball = False
+		self.sc = 0.00
+		self.ic = 0.00
 		self.fric = 0.45
+		# Stuff for reading and displaying information from the maps.
+		self.FPK = loader.loadTexture('../maps/' + self.smWorld.mapName + '-f.png').peek()
+		self.IPK = loader.loadTexture('../maps/' + self.smWorld.mapName + '-i.png').peek()
+		self.SPK = loader.loadTexture('../maps/' + self.smWorld.mapName + '-s.png').peek()
+		self.FX = self.FPK.getXSize()
+		self.FY = self.FPK.getYSize()
+		self.IX = self.IPK.getXSize()
+		self.IY = self.IPK.getYSize()
+		self.SX = self.SPK.getXSize()
+		self.SY = self.SPK.getYSize()
+		self.CALC_COF = lambda x: 0.4 * x + 0.05
 		print("Player initialized.")
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -161,15 +167,20 @@ class SMPlayer():
 			else:
 				self.applyForce(Vec3((MOVE_SPEED * globalClock.getDt()) * xFactor / 2, (-MOVE_SPEED * globalClock.getDt()) * yFactor / 2, 0))
 		
+		fr = VBase4(0, 0, 0, 0)
+		self.FPK.lookup(fr, (self.playerNP.getX() + self.FX / 2) / self.FX, (self.playerNP.getY() + self.FY / 2) / self.FY)
 		
-		color = VBase4(0, 0, 0, 0)
-		TEXPK.lookup(color, (self.playerNP.getX() + TXX / 2) / TXX, (self.playerNP.getY() + TXY / 2) / TXY)
+		ice = VBase4(0, 0, 0, 0)
+		self.IPK.lookup(ice, (self.playerNP.getX() + self.IX / 2) / self.IX, (self.playerNP.getY() + self.IY / 2) / self.IY)
+		
+		snow = VBase4(0, 0, 0, 0)
+		self.SPK.lookup(snow, (self.playerNP.getX() + self.SX / 2) / self.SX, (self.playerNP.getY() + self.SY / 2) / self.SY)
 		
 		# Here is where you would use CALC_COF(color.getX()) to set the ground friction
-		# Note, the use of the label really slows down drawing.
-		# FRICTION_LBL.setText('coefficient of friction: ' + str(CALC_COF(color.getX())))
-		self.fric = CALC_COF(color.getX())
-	
+		self.fric = self.CALC_COF(fr.getX())
+		self.ic = ice.getX()
+		self.sc = snow.getX()
+
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Prevents DHP (Dukes of Hazard Phenomenon)
 	# (h = Terrain height at X,y; th = terrain z coord)
@@ -220,6 +231,12 @@ class SMPlayer():
 	def setRolling(self, roll):
 		self.rollingSnowball = roll
 	
+	
+	def getSnow(self):
+		return self.sc
+		
+	def getIce(self):
+		return self.ic
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Gets the player's friction value at its position.

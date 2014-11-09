@@ -32,14 +32,14 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def __init__(self, gameState, mapName, deathHeight, tObj, aObj):
-	
+		self.mapName = mapName
 		self.audioMgr = aObj
 		self.worldObj = self.setupWorld()
+		self.heightMap = self.setupHeightmap(self.mapName)
+		self.deathZone = self.setupDeathzone(deathHeight)
 		self.debugNode = self.setupDebug()
 		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, -5, -8, 40, self.audioMgr)
 		self.playerNP = self.playerObj.getNodePath()
-		self.heightMap = self.setupHeightmap(mapName)
-		self.deathZone = self.setupDeathzone(deathHeight)
 		
 		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerObj)
 		self.ballNP = self.ballObj.getNodePath()
@@ -79,6 +79,8 @@ class SMWorld(DirectObject):
 		self.textObj.addText("yetiPos", "Position: ")
 		self.textObj.addText("yetiVel", "Velocity: ")
 		self.textObj.addText("yetiFric", "Friction: ")
+		self.textObj.addText("onIce", "Ice(%): ")
+		self.textObj.addText("onSnow", "Snow(%): ")
 		self.textObj.addText("terrHeight", "T Height: ")
 		self.textObj.addText("terrSteepness", "Steepness: ")
 		
@@ -228,7 +230,7 @@ class SMWorld(DirectObject):
 					newRock = render.attachNewNode("newRock")
 					newRock.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					rock.instanceTo(newRock)
-
+		render.flattenStrong()
 
 		self.hmTerrainNP.reparentTo(render)
 		
@@ -425,10 +427,14 @@ class SMWorld(DirectObject):
 		ry = str(round(self.downRayTest.getY(), 2))
 		rz = str(round(self.terrSteepness, 2))
 		fric = str(round(self.playerObj.getFriction(), 2))
+		ip = str(round(self.playerObj.getIce(), 2))
+		sp = str(round(self.playerObj.getSnow(), 2))
 		tHeight = str(round(self.getTerrainHeight(x, y), 1))
 		self.textObj.editText("yetiPos", "Position: (" + sx + ", " + sy + ", " + sz + ")")
 		self.textObj.editText("yetiVel", "Velocity: (" + vx + ", " + vy + ", " + vz + ")")
 		self.textObj.editText("yetiFric", "Friction: " + fric)
+		self.textObj.editText("onIce", "Ice(%): " + ip)
+		self.textObj.editText("onSnow", "Snow(%): " + sp)
 		self.textObj.editText("terrHeight", "T Height: " + tHeight)
 		self.textObj.editText("terrSteepness", "Steepness: " + rz)
 
