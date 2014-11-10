@@ -13,7 +13,7 @@ DEG_TO_RAD = pi/180
 MAX_VEL_XY = 50
 MAX_VEL_Z = 5000
 MOVE_SPEED = 50.0 * 100000
-JUMP_FORCE = 8.0 * 100000
+JUMP_FORCE = 8.0 * 18000
 STOP_DAMPING = 5
 JMP_STOP_DAMPING = 0.88
 TURN_DAMPING = 0.92
@@ -107,13 +107,17 @@ class SMPlayer():
 		# if(abs(self.getVelocity().getZ()) < 10):
 			# self.setAirborneFlag(True)
 		if(self.isAirborne == False):
+			self.jumpTime = 0.85
 			v = self.getVelocity()
 			self.setAirborneFlag(True)
-			# print("Jump successful")
 			self.setFactor(1, 1, 1)
 			self.setVelocity(Vec3(v.getX(), v.getY(), 0))
 			# self.audioMgr.playSFX("yetiJump01")
 			self.applyForce(Vec3(0, 0, JUMP_FORCE))
+		elif(self.jumpTime > 0):
+			self.applyForce(Vec3(0, 0, JUMP_FORCE*self.jumpTime))
+			self.jumpTime = self.jumpTime - 0.1
+			# print(self.jumpTime)
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Returns the airborne flag.

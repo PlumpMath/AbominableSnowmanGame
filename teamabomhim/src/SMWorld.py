@@ -62,9 +62,9 @@ class SMWorld(DirectObject):
 		# self.camObj.reparentTo(self.playerNP)
 		
 		# Collectables
-		self.collectObj = SMCollect(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ())
-		self.collectNP = self.collectObj.getNodePath()
-		
+		self.collectable1 = SMCollect(self.worldBullet, self.worldObj, -80, -80, -5)
+		self.collectNP1 = self.collectable1.getNodePath()
+			
 		# GUI
 		self.GUI = SMGUI()
 		self.snowflakeCounter = SMGUIElement("Snowflakes: ", 3)
@@ -425,10 +425,9 @@ class SMWorld(DirectObject):
 			th = self.getTerrainHeight(px, py)
 			self.playerObj.snapToTerrain(th, self.hmHeight)
 		
-		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP)):
-			self.collectObj.destroy()
+		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP1)):
+			self.collectable1.destroy()
 			self.snowflakeCounter.changeValue(1)
-
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the debug text.
