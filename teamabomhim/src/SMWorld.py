@@ -38,7 +38,7 @@ class SMWorld(DirectObject):
 		self.heightMap = self.setupHeightmap(self.mapName)
 		self.deathZone = self.setupDeathzone(deathHeight)
 		self.debugNode = self.setupDebug()
-		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, -5, -8, 40, self.audioMgr)
+		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, 40, 2, -8, self.audioMgr)
 		self.playerNP = self.playerObj.getNodePath()
 		
 		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerObj)
@@ -71,10 +71,9 @@ class SMWorld(DirectObject):
 		self.GUI.addElement("snowflakes", self.snowflakeCounter)
 		
 		# AI
-		self.goat1 = SMAI("../res/models/goat.egg", 50.0, self.worldBullet, self.worldObj, -64, -5, 5) #self.playerNP.getX()-40, self.playerNP.getY()+1, self.playerNP.getZ()-5)
+		self.goat1 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -70, -95, 5) #self.playerNP.getX()-40, self.playerNP.getY()+1, self.playerNP.getZ()-5)
 		self.goat1.setBehavior("flee", self.playerNP)
-
-		self.goat2 = SMAI("../res/models/goat.egg", 50.0, self.worldBullet, self.worldObj, -67, -3, 5) #self.playerNP.getX()+5, self.playerNP.getY()+20, self.playerNP.getZ()+5)
+		self.goat2 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -80, -83, 5) #self.playerNP.getX()+5, self.playerNP.getY()+20, self.playerNP.getZ()+5)
 		self.goat2.setBehavior("flee", self.playerNP)
 		print("AI Initialized")
 		
@@ -109,7 +108,26 @@ class SMWorld(DirectObject):
 		
 		self.audioMgr.playBGM("snowmanWind")
 		
-
+		# Added some props to the world.
+		self.playerNP.setH(90)
+		cave = loader.loadModel("../res/models/cave_tunnel.egg")
+		cave.setScale(5)
+		cave.setR(180)
+		cave.setPos(45, 0, -13)
+		cave.reparentTo(render)
+		
+		planeFront = loader.loadModel("../res/models/plane_front.egg")
+		planeFront.setScale(5)
+		planeFront.setPos(-70, -28, -13)
+		planeFront.reparentTo(render)
+		
+		# Skybox formed
+		# skybox = loader.loadModel("../res/models/skybox.egg")
+		# skybox.set_two_sided(true)
+		# skybox.setScale(350)
+		# skybox.setPos(0, 0, 0)
+		# skybox.reparentTo(render)
+		
 		print("World initialized.")
 
 
