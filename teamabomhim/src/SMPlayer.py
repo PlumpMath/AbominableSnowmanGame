@@ -7,20 +7,28 @@ from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderSha
 from panda3d.bullet import ZUp
 from math import sin, cos, pi
 
+# Physics attributes
 MASS = 200.0
 TURN_SPEED = 180
 DEG_TO_RAD = pi/180
 MAX_VEL_XY = 50
 MAX_VEL_Z = 5000
-MOVE_SPEED = 50.0 * 100000
-JUMP_FORCE = 8.0 * 100000
+MOVE_SPEED = 30.0 * 100000
+JUMP_FORCE = 7.0 * 100000
 STOP_DAMPING = 5
 JMP_STOP_DAMPING = 0.88
 TURN_DAMPING = 0.92
 SLIP_THRESHOLD = 0.30
 PNT = Point3(0,0,0)
-SNOW_HEIGHT = -2.1
-SOLID_HEIGHT = -1.8
+
+# Smooth this out later
+SNOW_HEIGHT = -3.5
+SOLID_HEIGHT = -2.0
+
+# Terrain enumeration
+TERRAIN_SNOW = 0
+TERRAIN_ICE = 1
+TERRAIN_STONE = 2
 
 class SMPlayer():
 	
@@ -39,10 +47,10 @@ class SMPlayer():
 		self.audioMgr = audMgr
 		self.playerNP = self.setupPlayer(self.startX, self.startY, self.startZ)
 		self.isAirborne = True
+		self.rollingSnowball = False
 		self.terrainType = -1
 		self.velocity = Vec3(0,0,0)
 		self.rotation = self.playerNP.getH()
-		self.rollingSnowball = False
 		self.sc = 0.00
 		self.ic = 0.00
 		self.fric = 0.45
@@ -57,6 +65,7 @@ class SMPlayer():
 		self.SX = self.SPK.getXSize()
 		self.SY = self.SPK.getYSize()
 		self.CALC_COF = lambda x: 0.4 * x + 0.05
+		self.updateTerrain()
 		print("Player initialized.")
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -74,10 +83,11 @@ class SMPlayer():
 		yetiHeight = 7
 		yetiRadius = 2
 		yetiShape = BulletCapsuleShape(yetiRadius, yetiHeight - 2 * yetiRadius, ZUp)
-		yetiModel = loader.loadModel("../res/models/yeti.egg")
-		yetiModel.setH(90)
-		yetiModel.setPos(0, 0, SNOW_HEIGHT) # This is NOT the actual player position. Use playerNP instead.
-		yetiModel.flattenLight()
+		self.yetiModel = loader.loadModel("../res/models/yeti.egg")
+		self.yetiModel.setH(90)
+		self.yetiModel.setPos(0, 0, SNOW_HEIGHT) # This is NOT the actual player position. Use playerNP instead.
+		
+		# self.yetiModel.flattenLight()
 		playerNode = BulletRigidBodyNode("Player")
 		playerNode.setMass(MASS)
 		playerNode.addShape(yetiShape)
@@ -91,10 +101,13 @@ class SMPlayer():
 		playerNP = self.worldNP.attachNewNode(playerNode)
 		playerNP.setPos(x, y, z)
 		playerNP.setH(0)
-		yetiModel.reparentTo(playerNP)
+		self.yetiModel.reparentTo(playerNP)
 		self.bulletWorld.attachRigidBody(playerNP.node())
 		return playerNP
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Returns the player's BulletRigidBodyNode (may cause a crash; haven't looked into it).
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def getPlayerNode(self):
 		return playerNode
@@ -104,16 +117,17 @@ class SMPlayer():
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def jump(self):
-		# if(abs(self.getVelocity().getZ()) < 10):
-			# self.setAirborneFlag(True)
 		if(self.isAirborne == False):
+			self.jumpTime = 0.85
 			v = self.getVelocity()
 			self.setAirborneFlag(True)
-			# print("Jump successful")
 			self.setFactor(1, 1, 1)
 			self.setVelocity(Vec3(v.getX(), v.getY(), 0))
 			# self.audioMgr.playSFX("yetiJump01")
 			self.applyForce(Vec3(0, 0, JUMP_FORCE))
+		elif(self.jumpTime > 0):
+			self.applyForce(Vec3(0, 0, JUMP_FORCE * globalClock.getDt() * self.jumpTime))
+			self.jumpTime = self.jumpTime - 0.1
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Returns the airborne flag.
@@ -129,6 +143,36 @@ class SMPlayer():
 	def setAirborneFlag(self, flag):
 		self.isAirborne = flag
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Returns the terrain ID of the player's (x,y)
+	# 0 = SNOW;  1 = ICE;  2 = STONE
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def updateTerrain(self):
+		
+		# Prevent this from happening if we're airborne
+		if(self.isAirborne == False):
+		
+			# Stone
+			if(self.sc <= 0.2 and self.ic <= 0.2):
+				self.setTerrain(TERRAIN_STONE)
+			else:
+				
+				# Ice (takes priority over snow)
+				if(self.ic >= self.sc):
+					self.setTerrain(TERRAIN_ICE)
+				else:
+					self.setTerrain(TERRAIN_SNOW)
+					
+			# Set player height accordingly
+			mpos = self.yetiModel.getPos()
+			mx = mpos.getX()
+			my = mpos.getY()
+			h = SOLID_HEIGHT
+			if(self.terrainType == TERRAIN_SNOW):
+				h = SNOW_HEIGHT
+			self.yetiModel.setPos(mx, my, h)
+
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Sets the terrain type.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -180,6 +224,7 @@ class SMPlayer():
 		self.fric = self.CALC_COF(fr.getX())
 		self.ic = ice.getX()
 		self.sc = snow.getX()
+		self.updateTerrain()
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Prevents DHP (Dukes of Hazard Phenomenon)
@@ -197,7 +242,6 @@ class SMPlayer():
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def stop(self):
-		# print(self.getTerrainHeight())
 		vx = self.getVelocity().getX()
 		vy = self.getVelocity().getY()
 		vz = self.getVelocity().getZ()
@@ -210,7 +254,7 @@ class SMPlayer():
 		else:
 			self.setFactor(0, 0, 1)
 			self.setVelocity(Vec3((vx - (vx * STOP_DAMPING * dt)), (vy - (vy * STOP_DAMPING * dt)), vz))
-	
+		self.updateTerrain()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Sets the player's position to the spawn position.
@@ -228,13 +272,24 @@ class SMPlayer():
 	def hasSnowball(self):
 		return self.rollingSnowball
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets the rolling snowball state.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def setRolling(self, roll):
 		self.rollingSnowball = roll
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Gets the snow coefficient of the player's (x,y)
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def getSnow(self):
 		return self.sc
-		
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Gets the ice coefficient of the player's (x,y)
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def getIce(self):
 		return self.ic
 	

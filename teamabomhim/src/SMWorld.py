@@ -11,9 +11,7 @@ from direct.showbase.Transitions import Transitions
 from DebugNode import DebugNode
 from SMPlayer import SMPlayer
 from SMKeyHandler import SMKeyHandler
-
-from SMCameraDev import SMCamera # Was "from SMCamera [...]"
-
+from SMCameraDev import SMCamera
 from SMCollisionHandler import SMCollisionHandler
 from SMLighting import SMLighting
 from SMCollect import SMCollect
@@ -22,7 +20,11 @@ from SMAI import SMAI
 from SMGUI import SMGUI
 from SMGUIElement import SMGUIElement
 
+# Global gravity constant (9.81 is for scrubs)
 GRAVITY = 96
+TERRAIN_SNOW = 0
+TERRAIN_ICE = 1
+TERRAIN_STONE = 2
 
 class SMWorld(DirectObject):
 
@@ -32,15 +34,18 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def __init__(self, gameState, mapName, deathHeight, tObj, aObj):
+		
+		# Create new instances of our various objects
 		self.mapName = mapName
 		self.audioMgr = aObj
 		self.worldObj = self.setupWorld()
 		self.heightMap = self.setupHeightmap(self.mapName)
 		self.deathZone = self.setupDeathzone(deathHeight)
 		self.debugNode = self.setupDebug()
-		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, -5, -8, 40, self.audioMgr)
-		self.playerNP = self.playerObj.getNodePath()
 		
+		# The -5, -8, 40 is the player's starting position
+		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, 40, 2, -8, self.audioMgr)
+		self.playerNP = self.playerObj.getNodePath()
 		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerObj)
 		self.ballNP = self.ballObj.getNodePath()
 		
@@ -56,14 +61,15 @@ class SMWorld(DirectObject):
 		
 		# Camera
 		# self.camObj = SMCamera(0, 0, 0, self.playerObj.getNodePath())
-		self.camObj = SMCamera(self.playerObj)
+		self.camObj = SMCamera(self.playerObj, self.worldBullet, self.worldObj)
 		self.cameraControl = False
+		
 		# self.camObj.setPos(0, -40, 10)
 		# self.camObj.reparentTo(self.playerNP)
 		
 		# Collectables
-		self.collectObj = SMCollect(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ())
-		self.collectNP = self.collectObj.getNodePath()
+		self.collectable1 = SMCollect(self.worldBullet, self.worldObj, -80, -80, -5)
+		self.collectNP1 = self.collectable1.getNodePath()
 		
 		# GUI
 		self.GUI = SMGUI()
@@ -71,7 +77,11 @@ class SMWorld(DirectObject):
 		self.GUI.addElement("snowflakes", self.snowflakeCounter)
 		
 		# Survivor AI
-		# self.SMAI = SMAI(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ(), "../res/models/goat.egg", "Flee", self.playerNP)	
+		self.goat1 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -70, -95, 5)
+		self.goat1.setBehavior("flee", self.playerNP)
+
+		self.goat2 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -80, -83, 5)
+		self.goat2.setBehavior("flee", self.playerNP)
 		print("AI Initialized")
 		
 		# Debug Text
@@ -84,32 +94,66 @@ class SMWorld(DirectObject):
 		self.textObj.addText("terrHeight", "T Height: ")
 		self.textObj.addText("terrSteepness", "Steepness: ")
 		
-		self.accept('b', self.spawnBall)
-
+		# Pause screen transition
 		self.transition = Transitions(loader)
 
+		# Method-based keybindings
+		self.accept('b', self.spawnBall)
 		self.accept('escape', base.userExit)
 		self.accept('enter', self.pauseUnpause)
 		self.accept('f1', self.toggleDebug)
 		self.accept('mouse1', self.enableCameraControl)
 		self.accept('mouse1-up', self.disableCameraControl)
+		self.accept('wheel_up', self.camObj.zoomIn)
+		self.accept('wheel_down', self.camObj.zoomOut)
 		
 		self.pauseUnpause()
 		
+		# Disable the mouse
 		base.disableMouse()
 		props = WindowProperties()
 		props.setCursorHidden(True)
 		base.win.requestProperties(props)
 		
+		# Uncomment this to see everything being rendered.
 		# self.printSceneGraph()
 		
+		# Play the BGM
 		self.audioMgr.playBGM("snowmanWind")
+		
+		# Added some props to the world.
+		self.playerNP.setH(90)
+		cave = loader.loadModel("../res/models/cave_tunnel.egg")
+		cave.setScale(5)
+		cave.setR(180)
+		cave.setPos(45, 0, -13)
+		cave.reparentTo(render)
+		
+		planeFront = loader.loadModel("../res/models/plane_front.egg")
+		planeFront.setScale(5)
+		planeFront.setPos(-70, -28, -13)
+		planeFront.reparentTo(render)
+		
+		# Skybox formed
+		# skybox = loader.loadModel("../res/models/skybox.egg")
+		# skybox.set_two_sided(true)
+		# skybox.setScale(350)
+		# skybox.setPos(0, 0, 0)
+		# skybox.reparentTo(render)
 		
 		print("World initialized.")
 
 
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Enables the camera to be rotated by moving the mouse horizontally.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def enableCameraControl(self):
 		self.cameraControl = True
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Disables the camera control.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def disableCameraControl(self):
 		self.cameraControl = False
@@ -162,9 +206,9 @@ class SMWorld(DirectObject):
 	
 	def setupDebug(self):
 		debug = BulletDebugNode()
-		debug.showWireframe(False)
+		debug.showWireframe(False) # Yeah, don't set this to true unless you want to emulate an 80's computer running Crysis on Ultra settings.
 		debug.showConstraints(True)
-		debug.showBoundingBoxes(True)
+		debug.showBoundingBoxes(True) # This is the main use I have for it.
 		debug.showNormals(True)
 		debugNP = render.attachNewNode(debug)
 		self.worldBullet.setDebugNode(debugNP.node())
@@ -176,6 +220,8 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def setupHeightmap(self, name):
+		
+		# Automatically generate a heightmap mesh from a monochrome image.
 		self.hmHeight = 120
 		hmPath = "../maps/" + name + "-h.png"
 		imPath = "../maps/" + name + "-i.png"
@@ -188,21 +234,19 @@ class SMWorld(DirectObject):
 		hmNode.setMass(0)
 		self.hmNP = render.attachNewNode(hmNode)
 		self.worldBullet.attachRigidBody(hmNode)
-
 		self.hmOffset = hmImg.getXSize() / 2.0 - 0.5
 		self.hmTerrain = GeoMipTerrain('gmTerrain')
 		self.hmTerrain.setHeightfield(hmImg)
 		
-		# self.hmTerrain.makeSlopeImage().write(Filename("slopeImg.png"))
-		
+		# Optimizations and fixes
 		self.hmTerrain.setBruteforce(True) # I don't think this is actually needed. 
 		
+		self.hmTerrain.setMinLevel(3) # THIS is what triangulates the terrain.
+		self.hmTerrain.setBlockSize(128)  # This does a pretty good job of raising FPS.
+		
+		# Level-of-detail (not yet working)
 		# self.hmTerrain.setNear(40)
 		# self.hmTerrain.setFar(200)
-		
-		# Let's improve performance, eh?
-		self.hmTerrain.setMinLevel(3) # Woah, hang on. I think I improved performance without flattening.
-		self.hmTerrain.setBlockSize(128)  # This does a pretty good job.
 		
 		self.hmTerrain.generate()
 		
@@ -210,7 +254,7 @@ class SMWorld(DirectObject):
 		self.hmTerrainNP.setSz(self.hmHeight)
 		self.hmTerrainNP.setPos(-self.hmOffset, -self.hmOffset, -self.hmHeight / 2.0)
 		self.hmTerrainNP.flattenStrong() # This only reduces the number of nodes; nothing to do with polys.
-		self.hmTerrainNP.analyze()
+		# self.hmTerrainNP.analyze()
 
 		# Here begins the scenery mapping
 		tree = loader.loadModel("../res/models/tree_1.egg")
@@ -230,7 +274,7 @@ class SMWorld(DirectObject):
 					newRock = render.attachNewNode("newRock")
 					newRock.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					rock.instanceTo(newRock)
-		render.flattenStrong()
+		# render.flattenStrong()
 
 		self.hmTerrainNP.reparentTo(render)
 		
@@ -316,8 +360,10 @@ class SMWorld(DirectObject):
 	
 	def playerMove(self):
 	
+		# Go through the collision and flag tests, and update them
 		self.doPlayerTests()
 		
+		# Poll the keys for more responsive controls
 		if self.kh.poll('a'):
 			self.playerObj.turn(True)
 		elif self.kh.poll('d'):
@@ -326,35 +372,25 @@ class SMWorld(DirectObject):
 			newMousePos = self.kh.getMouse()
 			mx = newMousePos.getX()
 			self.camObj.rotateCamera(mx)
-			self.camObj.calculatePosition()
 		
-		# print(self.camObj.getAngle())
+		self.camObj.calculatePosition()
 		
 		if self.kh.poll('w'):
 			self.playerObj.move(True)
-			
 			self.camObj.rotateTowards(90)
-			
 			if(self.ballObj.isRolling()):
 				self.ballObj.grow()
 		elif self.kh.poll('s'):
 			self.playerObj.move(False)
 		else:
 			self.playerObj.stop()
-		
-		
-			
-		base.win.movePointer(0, 400, 300)
-		
-		
 
 		if(self.kh.poll(' ') and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
 			self.playerObj.jump()
-		
-		# self.camObj.lookAt(self.playerObj.getNodePath())
+
+		base.win.movePointer(0, 400, 300)
 
 		# self.hmTerrain.setFocalPoint(self.playerObj.getPosition())
-		# self.hmTerrain.update()
 		self.updateStats()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -363,13 +399,15 @@ class SMWorld(DirectObject):
 	
 	def doPlayerTests(self):
 		
+		# Player's position
 		plPos = self.playerObj.getPosition()
 		px = plPos.getX()
 		py = plPos.getY()
 		pz = plPos.getZ()
+		
+		# Raycast directly down for terrain steepness
 		rayYetiA = Point3(px, py, pz)
 		rayYetiB = Point3(px, py, pz - 300)
-		
 		self.downRayTest = self.worldBullet.rayTestClosest(rayYetiA, rayYetiB).getHitNormal()
 		rx = self.downRayTest.getX()
 		ry = self.downRayTest.getY()
@@ -379,32 +417,43 @@ class SMWorld(DirectObject):
 		# Redo collision flags later
 		tempFlag = False
 		
+		# Snow/Ice height adjust
+		self.playerObj.updateTerrain()
+		
+		# Collision: Player x Terrain
 		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
 			if(self.playerObj.getAirborneFlag()):
 				self.audioMgr.playSFX("snowCrunch01")
 			self.playerObj.setAirborneFlag(False)
 			self.playerObj.setFactor(1, 1, 1)
 		
+		# Collision: Player x Snowball
 		if(self.ballObj.exists() and self.colObj.didCollide(self.playerNP.node(), self.ballObj.getRigidbody())):
 			self.playerObj.setAirborneFlag(False)
 			tempFlag = True
 			self.playerObj.setFactor(1, 1, 1)
 		
+		# Collision: Player x Death Zone
 		if(self.colObj.didCollide(self.playerNP.node(), self.deathZone.node())):
 			print("Player confirmed #REKT")
 			self.playerObj.respawn()
 		
+		# Out of bounds checking
 		if(abs(px) > 255 or abs(py) > 255):
 			print("Player out of bounds!")
 			self.playerObj.respawn()
 		
+		# Snap to terrain if... something. I need to restructure this. Don't read it.
 		if(not(self.playerObj.getAirborneFlag()) and not(tempFlag)):
 			th = self.getTerrainHeight(px, py)
 			self.playerObj.snapToTerrain(th, self.hmHeight)
 		
-		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP)):
-			self.collectObj.destroy()
+		# Collision: Player x Snowflake
+		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP1)):
+			self.collectable1.destroy()
 			self.snowflakeCounter.changeValue(1)
+			
+		
 
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -445,7 +494,7 @@ class SMWorld(DirectObject):
 	def update(self, task):
 		dt = globalClock.getDt()
 		self.worldBullet.doPhysics(dt)
-		# self.SMAI.AIUpdate()
+		self.goat1.AIUpdate()
+		self.goat2.AIUpdate()
 		self.playerMove()
 		return task.cont
-

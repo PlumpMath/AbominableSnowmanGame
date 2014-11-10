@@ -8,7 +8,6 @@ from direct.showbase.DirectObject import DirectObject
 from DebugNode import DebugNode
 from SMPlayer import SMPlayer
 from SMKeyHandler import SMKeyHandler
-from SMCamera import SMCamera
 from SMCollisionHandler import SMCollisionHandler
 from SMLighting import SMLighting
 
@@ -19,7 +18,7 @@ class SMCollect():
 		self.collectShape = BulletBoxShape(Vec3(3, 3, 3))
 		self.collectGN = BulletGhostNode('Box')
 		self.collectGN.addShape(self.collectShape)
-		self.collectNP = self.create(sx + 230, sy -212 , sz-12 , self.collectGN)
+		self.collectNP = self.create(sx, sy, sz, self.collectGN)
 		print("Collectable Initialized")
 		
 	def getNodePath(self):

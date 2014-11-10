@@ -7,17 +7,6 @@ from panda3d.bullet import ZUp
 from direct.showbase.DirectObject import DirectObject
 from direct.showbase.Transitions import Transitions
 
-from DebugNode import DebugNode
-from SMPlayer import SMPlayer
-from SMKeyHandler import SMKeyHandler
-from SMCamera import SMCamera
-from SMCollisionHandler import SMCollisionHandler
-from SMLighting import SMLighting
-from SMCollect import SMCollect
-from SMBall import SMBall
-from SMGUI import SMGUI
-from SMGUIElement import SMGUIElement
-
 from math import sin, cos, pi
 
 #Globals for converting between radians
@@ -37,10 +26,10 @@ class SMAI():
 		bulletWorld = world
 		self.type = ""
 		self.AIModel = loader.loadModel(model)
-		# self.AIModel.setScale(1)
+		self.AIModel.setScale(0.5)
 		self.AIModel.reparentTo(render)
 		
-		AIShape = BulletBoxShape(Vec3(2, 2, 2))
+		AIShape = BulletBoxShape(Vec3(3, 3, 1))
 		self.AINode = BulletRigidBodyNode('AIChar')
 		self.AINode.setMass(100)
 		self.AINode.addShape(AIShape)
