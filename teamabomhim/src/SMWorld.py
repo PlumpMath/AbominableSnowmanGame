@@ -70,17 +70,17 @@ class SMWorld(DirectObject):
 		# Collectables
 		self.collectable1 = SMCollect(self.worldBullet, self.worldObj, -80, -80, -5)
 		self.collectNP1 = self.collectable1.getNodePath()
-		
+
 		# GUI
 		self.GUI = SMGUI()
 		self.snowflakeCounter = SMGUIElement("Snowflakes: ", 3)
 		self.GUI.addElement("snowflakes", self.snowflakeCounter)
-		
-		# Survivor AI
+
+		# AI
 		self.goat1 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -70, -95, 5)
 		self.goat1.setBehavior("flee", self.playerNP)
-
 		self.goat2 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -80, -83, 5)
+
 		self.goat2.setBehavior("flee", self.playerNP)
 		print("AI Initialized")
 		
@@ -452,8 +452,6 @@ class SMWorld(DirectObject):
 		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP1)):
 			self.collectable1.destroy()
 			self.snowflakeCounter.changeValue(1)
-			
-		
 
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
