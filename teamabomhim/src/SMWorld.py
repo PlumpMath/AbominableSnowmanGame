@@ -70,8 +70,12 @@ class SMWorld(DirectObject):
 		self.snowflakeCounter = SMGUIElement("Snowflakes: ", 3)
 		self.GUI.addElement("snowflakes", self.snowflakeCounter)
 		
-		# Survivor AI
-		# self.SMAI = SMAI(self.worldBullet, self.worldObj, self.playerNP.getX(), self.playerNP.getY(), self.playerNP.getZ(), "../res/models/goat.egg", "Flee", self.playerNP)	
+		# AI
+		self.goat1 = SMAI("../res/models/goat.egg", 50.0, self.worldBullet, self.worldObj, -64, -5, 5) #self.playerNP.getX()-40, self.playerNP.getY()+1, self.playerNP.getZ()-5)
+		self.goat1.setBehavior("flee", self.playerNP)
+
+		self.goat2 = SMAI("../res/models/goat.egg", 50.0, self.worldBullet, self.worldObj, -67, -3, 5) #self.playerNP.getX()+5, self.playerNP.getY()+20, self.playerNP.getZ()+5)
+		self.goat2.setBehavior("flee", self.playerNP)
 		print("AI Initialized")
 		
 		# Debug Text
@@ -105,6 +109,7 @@ class SMWorld(DirectObject):
 		
 		self.audioMgr.playBGM("snowmanWind")
 		
+
 		print("World initialized.")
 
 
@@ -445,7 +450,8 @@ class SMWorld(DirectObject):
 	def update(self, task):
 		dt = globalClock.getDt()
 		self.worldBullet.doPhysics(dt)
-		# self.SMAI.AIUpdate()
+		self.goat1.AIUpdate()
+		self.goat2.AIUpdate()
 		self.playerMove()
 		return task.cont
 

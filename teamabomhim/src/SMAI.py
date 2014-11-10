@@ -37,10 +37,10 @@ class SMAI():
 		bulletWorld = world
 		self.type = ""
 		self.AIModel = loader.loadModel(model)
-		# self.AIModel.setScale(1)
+		self.AIModel.setScale(0.5)
 		self.AIModel.reparentTo(render)
 		
-		AIShape = BulletBoxShape(Vec3(2, 2, 2))
+		AIShape = BulletBoxShape(Vec3(3, 3, 1))
 		self.AINode = BulletRigidBodyNode('AIChar')
 		self.AINode.setMass(100)
 		self.AINode.addShape(AIShape)
