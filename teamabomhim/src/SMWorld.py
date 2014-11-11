@@ -135,11 +135,11 @@ class SMWorld(DirectObject):
 		planeFront.reparentTo(render)
 		
 		# Skybox formed
-		# skybox = loader.loadModel("../res/models/skybox.egg")
+		skybox = loader.loadModel("../res/models/skybox.egg")
 		# skybox.set_two_sided(true)
-		# skybox.setScale(350)
-		# skybox.setPos(0, 0, 0)
-		# skybox.reparentTo(render)
+		skybox.setScale(200)
+		skybox.setPos(0, 0, -450)
+		skybox.reparentTo(render)
 		
 		print("World initialized.")
 
