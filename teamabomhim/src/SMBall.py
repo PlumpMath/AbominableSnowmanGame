@@ -84,6 +84,7 @@ class SMBall():
 		self.ballModel.reparentTo(rbNP)
 		rbNP.setPos(px + dx, py + dy, pz)
 		self.worldBullet.attachRigidBody(self.ballRBody)
+		self.setRolling(False)
 		self.rolledOnce = True
 		self.ballExists = True
 	

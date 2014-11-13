@@ -34,16 +34,16 @@ class SMPlayer():
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Constructor
-	# (BulletWorld, NodePath of BulletWorld, int, int, int)
+	# (BulletWorld, NodePath of BulletWorld, Point3, AudioManager object)
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def __init__(self, wrld, wNP, smWrld, startX, startY, startZ, audMgr):
+	def __init__(self, wrld, wNP, smWrld, startPos, audMgr):
 		self.bulletWorld = wrld
 		self.worldNP = wNP
 		self.smWorld = smWrld
-		self.startX = startX
-		self.startY = startY
-		self.startZ = startZ
+		self.startX = startPos.getX()
+		self.startY = startPos.getY()
+		self.startZ = startPos.getZ()
 		self.audioMgr = audMgr
 		self.playerNP = self.setupPlayer(self.startX, self.startY, self.startZ)
 		self.isAirborne = True

@@ -1,4 +1,4 @@
-from panda3d.core import BitMask32, Point2, Point3, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage, VBase4
+from panda3d.core import BitMask32, Point2, Point3, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage, VBase4, NodePath
 from panda3d.core import WindowProperties
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode, BulletGhostNode
@@ -35,6 +35,10 @@ class SMWorld(DirectObject):
 	
 	def __init__(self, gameState, mapName, deathHeight, tObj, aObj):
 		
+		# Metadata variables
+		self.playerStart = Point3(0,0,0)
+		self.snowflakeCount = 0
+		
 		# Create new instances of our various objects
 		self.mapName = mapName
 		self.audioMgr = aObj
@@ -43,10 +47,13 @@ class SMWorld(DirectObject):
 		self.deathZone = self.setupDeathzone(deathHeight)
 		self.debugNode = self.setupDebug()
 		
-		# The -5, -8, 40 is the player's starting position
-		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, 40, 2, -8, self.audioMgr)
+		# Player Init
+		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, self.playerStart, self.audioMgr)
 		self.playerNP = self.playerObj.getNodePath()
+		
+		# Snowball Init
 		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerObj)
+		self.sbCollideFlag = False
 		self.ballNP = self.ballObj.getNodePath()
 		
 		# Key Handler
@@ -63,9 +70,6 @@ class SMWorld(DirectObject):
 		# self.camObj = SMCamera(0, 0, 0, self.playerObj.getNodePath())
 		self.camObj = SMCamera(self.playerObj, self.worldBullet, self.worldObj)
 		self.cameraControl = False
-		
-		# self.camObj.setPos(0, -40, 10)
-		# self.camObj.reparentTo(self.playerNP)
 		
 		# Collectables
 		self.collectable1 = SMCollect(self.worldBullet, self.worldObj, -80, -80, -5)
@@ -98,10 +102,11 @@ class SMWorld(DirectObject):
 		self.transition = Transitions(loader)
 
 		# Method-based keybindings
-		self.accept('b', self.spawnBall)
+		# self.accept('b', self.spawnBall)
 		self.accept('escape', base.userExit)
 		self.accept('enter', self.pauseUnpause)
 		self.accept('f1', self.toggleDebug)
+		
 		self.accept('mouse1', self.enableCameraControl)
 		self.accept('mouse1-up', self.disableCameraControl)
 		self.accept('wheel_up', self.camObj.zoomIn)
@@ -116,12 +121,13 @@ class SMWorld(DirectObject):
 		base.win.requestProperties(props)
 		
 		# Uncomment this to see everything being rendered.
-		# self.printSceneGraph()
+		self.printSceneGraph()
 		
 		# Play the BGM
 		self.audioMgr.playBGM("snowmanWind")
 		
 		# Added some props to the world.
+		# TODO: Use map metadata to load these instead of hardcoding them.
 		self.playerNP.setH(90)
 		cave = loader.loadModel("../res/models/cave_tunnel.egg")
 		cave.setScale(5)
@@ -240,10 +246,8 @@ class SMWorld(DirectObject):
 		
 		# Optimizations and fixes
 		self.hmTerrain.setBruteforce(True) # I don't think this is actually needed. 
-		
 		self.hmTerrain.setMinLevel(3) # THIS is what triangulates the terrain.
 		self.hmTerrain.setBlockSize(128)  # This does a pretty good job of raising FPS.
-		
 		# Level-of-detail (not yet working)
 		# self.hmTerrain.setNear(40)
 		# self.hmTerrain.setFar(200)
@@ -254,28 +258,34 @@ class SMWorld(DirectObject):
 		self.hmTerrainNP.setSz(self.hmHeight)
 		self.hmTerrainNP.setPos(-self.hmOffset, -self.hmOffset, -self.hmHeight / 2.0)
 		self.hmTerrainNP.flattenStrong() # This only reduces the number of nodes; nothing to do with polys.
-		# self.hmTerrainNP.analyze()
+		self.hmTerrainNP.analyze()
 
 		# Here begins the scenery mapping
-		tree = loader.loadModel("../res/models/tree_1.egg")
-		rock = loader.loadModel("../res/models/rock_1.egg")
+		treeModel = loader.loadModel("../res/models/tree_1.egg")
+		rockModel = loader.loadModel("../res/models/rock_1.egg")
 		texpk = loader.loadTexture(scmPath).peek()
+		
+		# GameObject nodepath for flattening
+		objNP = render.attachNewNode("gameObjects")
+		treeNP = objNP.attachNewNode("goTrees")
+		rockNP = objNP.attachNewNode("goRocks")
 		
 		for i in range(0, texpk.getXSize()):
 			for j in range(0, texpk.getYSize()):
 				color = VBase4(0, 0, 0, 0)
 				texpk.lookup(color, float(i) / texpk.getXSize(), float(j) / texpk.getYSize())
-				if(int(color.getX() * 255) == 255):
-					newTree = render.attachNewNode("newTree")
+				if(int(color.getX() * 255.0) == 255.0):
+					newTree = treeNP.attachNewNode("treeNode")
+					treeModel.instanceTo(newTree)
 					newTree.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					# newTree.setScale can add some nice randomized scaling here.
-					tree.instanceTo(newTree)
-				if(int(color.getX() * 255) == 128):
+					
+				if(int(color.getX() * 255.0) == 128):
 					newRock = render.attachNewNode("newRock")
 					newRock.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
-					rock.instanceTo(newRock)
+					rockModel.instanceTo(newRock)
+					
 		# render.flattenStrong()
-
 		self.hmTerrainNP.reparentTo(render)
 		
 		# Here begins the attribute mapping
@@ -363,10 +373,10 @@ class SMWorld(DirectObject):
 		# Go through the collision and flag tests, and update them
 		self.doPlayerTests()
 		
-		# Poll the keys for more responsive controls
-		if self.kh.poll('a'):
+		# Movement and camera control
+		if self.kh.poll("a"):
 			self.playerObj.turn(True)
-		elif self.kh.poll('d'):
+		elif self.kh.poll("d"):
 			self.playerObj.turn(False)
 		elif(self.cameraControl):
 			newMousePos = self.kh.getMouse()
@@ -375,23 +385,39 @@ class SMWorld(DirectObject):
 		
 		self.camObj.calculatePosition()
 		
-		if self.kh.poll('w'):
+		# Rotation
+		if self.kh.poll("w"):
 			self.playerObj.move(True)
 			self.camObj.rotateTowards(90)
-			if(self.ballObj.isRolling()):
-				self.ballObj.grow()
-		elif self.kh.poll('s'):
+		elif self.kh.poll("s"):
 			self.playerObj.move(False)
 		else:
 			self.playerObj.stop()
 
-		if(self.kh.poll(' ') and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
+		# Jump
+		if(self.kh.poll(" ") and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
 			self.playerObj.jump()
+
+		# Snowball Rolling
+		if(self.kh.poll("lshift") and not(self.sbCollideFlag)):
+			if(self.ballObj.exists() and not(self.ballObj.isRolling())):
+				self.ballObj.respawn()
+			elif(self.ballObj.isRolling()):
+				if(self.kh.poll("w")):
+					self.ballObj.grow()
+			elif(self.ballObj.exists() == False):
+				self.ballObj.respawn()
+		else:
+			if(self.ballObj.isRolling()):
+				self.ballObj.dropBall()
 
 		base.win.movePointer(0, 400, 300)
 
 		# self.hmTerrain.setFocalPoint(self.playerObj.getPosition())
-		self.updateStats()
+		
+		# So updating the stats is VERY expensive.
+		if (self.debugNode.isHidden() == False):
+			self.updateStats()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Various tests concerning the player flags and collisions.
@@ -429,9 +455,11 @@ class SMWorld(DirectObject):
 		
 		# Collision: Player x Snowball
 		if(self.ballObj.exists() and self.colObj.didCollide(self.playerNP.node(), self.ballObj.getRigidbody())):
+			self.sbCollideFlag = True
 			self.playerObj.setAirborneFlag(False)
-			tempFlag = True
 			self.playerObj.setFactor(1, 1, 1)
+		else:
+			self.sbCollideFlag = False
 		
 		# Collision: Player x Death Zone
 		if(self.colObj.didCollide(self.playerNP.node(), self.deathZone.node())):
@@ -444,7 +472,7 @@ class SMWorld(DirectObject):
 			self.playerObj.respawn()
 		
 		# Snap to terrain if... something. I need to restructure this. Don't read it.
-		if(not(self.playerObj.getAirborneFlag()) and not(tempFlag)):
+		if(not(self.playerObj.getAirborneFlag()) and not(self.sbCollideFlag)):
 			th = self.getTerrainHeight(px, py)
 			self.playerObj.snapToTerrain(th, self.hmHeight)
 		
