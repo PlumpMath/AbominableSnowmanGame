@@ -6,7 +6,12 @@ class SMKeyHandler():
 	
 	def poll(self, keyChar):
 		keyPressed = base.mouseWatcherNode.is_button_down
-		key = KeyboardButton.ascii_key(keyChar)
+		keyExp = "KeyboardButton."
+		if(len(keyChar) > 1):
+			keyExp += (str(keyChar) + "()")
+		else:
+			keyExp += ("ascii_key('" + str(keyChar.lower()[:1]) + "')")
+		key = eval(keyExp)
 		if keyPressed(key):
 			return True
 		else:
