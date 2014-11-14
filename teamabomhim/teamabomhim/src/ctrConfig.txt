@@ -1,6 +1,6 @@
 first is foward,second is backm, thrid is right, 4 is left
-w
-s
-d
-a
- 
+"w"
+"s"
+"d"
+"a"
+" "

@@ -34,6 +34,7 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def __init__(self, gameState, mapName, deathHeight, tObj, aObj):
+		
 		#load in controls
 		ctrlFl = open("ctrConfig.txt")
 		#will skip n lines where [n,]
@@ -44,7 +45,6 @@ class SMWorld(DirectObject):
 		self.right = ctrlList.pop(0)
 		self.left = ctrlList.pop(0)		
 		self.jump = ctrlList.pop(0)
-		
 		
 		# Metadata variables
 		self.playerStart = Point3(0,0,0)
@@ -378,19 +378,21 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Handles player movement
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def playerMove(self):
 	
 		# Go through the collision and flag tests, and update them
 		self.doPlayerTests()
+		
 		w = self.forward
 		a = self.left
 		s = self.back
 		d = self.right
-		
-		# Poll the keys for more responsive controls
-		if self.kh.poll(a):
+		j = self.jump
+		# Movement and camera control
+		if self.kh.poll('a'):
 			self.playerObj.turn(True)
-		elif self.kh.poll(d):
+		elif self.kh.poll('d'):
 			self.playerObj.turn(False)
 		elif(self.cameraControl):
 			newMousePos = self.kh.getMouse()
@@ -399,39 +401,39 @@ class SMWorld(DirectObject):
 		
 		self.camObj.calculatePosition()
 		
-		if self.kh.poll(w):
+		# Rotation
+		if self.kh.poll('w'):
 			self.playerObj.move(True)
 			self.camObj.rotateTowards(90)
-			if(self.ballObj.isRolling()):
-				self.ballObj.grow()
-		elif self.kh.poll(s):
+		elif self.kh.poll('s'):
 			self.playerObj.move(False)
 		else:
 			self.playerObj.stop()
 
-		if(self.kh.poll(self.jump) and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
+		# Jump
+		if(self.kh.poll(' ') and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
 			self.playerObj.jump()
 
 		# Snowball Rolling
--		if(self.kh.poll("lshift") and not(self.sbCollideFlag)):
--			if(self.ballObj.exists() and not(self.ballObj.isRolling())):
--				self.ballObj.respawn()
--			elif(self.ballObj.isRolling()):
--				if(self.kh.poll("w")):
--					self.ballObj.grow()
--			elif(self.ballObj.exists() == False):
--				self.ballObj.respawn()
--		else:
--			if(self.ballObj.isRolling()):
--				self.ballObj.dropBall()
-		
+		if(self.kh.poll("lshift") and not(self.sbCollideFlag)):
+			if(self.ballObj.exists() and not(self.ballObj.isRolling())):
+				self.ballObj.respawn()
+			elif(self.ballObj.isRolling()):
+				if(self.kh.poll("w")):
+					self.ballObj.grow()
+			elif(self.ballObj.exists() == False):
+				self.ballObj.respawn()
+		else:
+			if(self.ballObj.isRolling()):
+				self.ballObj.dropBall()
+
 		base.win.movePointer(0, 400, 300)
-		
-		
+
 		# self.hmTerrain.setFocalPoint(self.playerObj.getPosition())
+		
 		# So updating the stats is VERY expensive.
--		if (self.debugNode.isHidden() == False):
--			self.updateStats()
+		if (self.debugNode.isHidden() == False):
+			self.updateStats()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Various tests concerning the player flags and collisions.
