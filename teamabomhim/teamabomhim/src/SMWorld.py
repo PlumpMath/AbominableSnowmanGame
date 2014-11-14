@@ -34,8 +34,7 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def __init__(self, gameState, mapName, deathHeight, tObj, aObj):
-		
-<<<<<<< HEAD:teamabomhim/teamabomhim/src/SMWorld.py
+
 		#load in controls
 		ctrlFl = open("ctrConfig.txt")
 		#will skip n lines where [n,]
@@ -47,8 +46,6 @@ class SMWorld(DirectObject):
 		self.left = ctrlList.pop(0)		
 		self.jump = ctrlList.pop(0)
 		
-=======
->>>>>>> 0ba4e777d2ac0f8d0386c059da60fe9ab3dbc0ea:teamabomhim/src/SMWorld.py
 		# Metadata variables
 		self.playerStart = Point3(0,0,0)
 		self.snowflakeCount = 0
@@ -386,8 +383,7 @@ class SMWorld(DirectObject):
 	
 		# Go through the collision and flag tests, and update them
 		self.doPlayerTests()
-		
-<<<<<<< HEAD:teamabomhim/teamabomhim/src/SMWorld.py
+
 		w = self.forward
 		a = self.left
 		s = self.back
