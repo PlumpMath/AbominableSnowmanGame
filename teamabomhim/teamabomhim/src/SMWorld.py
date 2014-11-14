@@ -35,6 +35,7 @@ class SMWorld(DirectObject):
 	
 	def __init__(self, gameState, mapName, deathHeight, tObj, aObj):
 		
+<<<<<<< HEAD:teamabomhim/teamabomhim/src/SMWorld.py
 		#load in controls
 		ctrlFl = open("ctrConfig.txt")
 		#will skip n lines where [n,]
@@ -46,6 +47,8 @@ class SMWorld(DirectObject):
 		self.left = ctrlList.pop(0)		
 		self.jump = ctrlList.pop(0)
 		
+=======
+>>>>>>> 0ba4e777d2ac0f8d0386c059da60fe9ab3dbc0ea:teamabomhim/src/SMWorld.py
 		# Metadata variables
 		self.playerStart = Point3(0,0,0)
 		self.snowflakeCount = 0
@@ -384,15 +387,17 @@ class SMWorld(DirectObject):
 		# Go through the collision and flag tests, and update them
 		self.doPlayerTests()
 		
+<<<<<<< HEAD:teamabomhim/teamabomhim/src/SMWorld.py
 		w = self.forward
 		a = self.left
 		s = self.back
 		d = self.right
 		j = self.jump
+
 		# Movement and camera control
-		if self.kh.poll('a'):
+		if self.kh.poll("a"):
 			self.playerObj.turn(True)
-		elif self.kh.poll('d'):
+		elif self.kh.poll("d"):
 			self.playerObj.turn(False)
 		elif(self.cameraControl):
 			newMousePos = self.kh.getMouse()
@@ -402,16 +407,19 @@ class SMWorld(DirectObject):
 		self.camObj.calculatePosition()
 		
 		# Rotation
-		if self.kh.poll('w'):
+
+		if self.kh.poll("w"):
 			self.playerObj.move(True)
 			self.camObj.rotateTowards(90)
-		elif self.kh.poll('s'):
+		elif self.kh.poll("s"):
+
 			self.playerObj.move(False)
 		else:
 			self.playerObj.stop()
 
 		# Jump
-		if(self.kh.poll(' ') and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
+
+		if(self.kh.poll(" ") and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
 			self.playerObj.jump()
 
 		# Snowball Rolling
