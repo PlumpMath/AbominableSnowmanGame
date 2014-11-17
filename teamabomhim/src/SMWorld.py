@@ -40,13 +40,9 @@ class SMWorld(DirectObject):
 		ctrlFl = open("ctrConfig.txt")
 		#will skip n lines where [n,]
 		#makes a list of controls
-		ctrlList = ctrlFl.readlines()[1:]			
-		self.forward = ctrlList.pop(0)
-		self.back = ctrlList.pop(0)
-		self.right = ctrlList.pop(0)
-		self.left = ctrlList.pop(0)		
-		self.jump = ctrlList.pop(0)
-		
+		self.keymap = eval(ctrlFl.read())
+		#close file
+		ctrlFl.close()
 		# Metadata variables
 		self.playerStart = Point3(0,0,0)
 		self.snowflakeCount = 0
@@ -396,16 +392,12 @@ class SMWorld(DirectObject):
 		# Go through the collision and flag tests, and update them
 		self.doPlayerTests()
 
-		w = self.forward
-		a = self.left
-		s = self.back
-		d = self.right
-		j = self.jump
+		
 
 		# Movement and camera control
-		if self.kh.poll("a"):
+		if self.kh.poll(self.keymap['Left']):
 			self.playerObj.turn(True)
-		elif self.kh.poll("d"):
+		elif self.kh.poll(self.keymap['Right']):
 			self.playerObj.turn(False)
 		elif(self.cameraControl):
 			newMousePos = self.kh.getMouse()
@@ -416,17 +408,17 @@ class SMWorld(DirectObject):
 		
 		# Rotation
 
-		if self.kh.poll("w"):
+		if self.kh.poll(self.keymap['Forward']):
 			self.playerObj.move(True)
 			self.camObj.rotateTowards(90)
-		elif self.kh.poll("s"):
+		elif self.kh.poll(self.keymap['Back']):
 
 			self.playerObj.move(False)
 		else:
 			self.playerObj.stop()
 
 		# Jump
-		if(self.kh.poll(" ") and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
+		if(self.kh.poll(self.keymap['Space']) and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
 			self.playerObj.jump()
 			
 		# Shift-based actions
