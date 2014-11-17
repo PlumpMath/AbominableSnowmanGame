@@ -62,6 +62,7 @@ class SMWorld(DirectObject):
 		# Player Init
 		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, self.playerStart, self.audioMgr)
 		self.playerNP = self.playerObj.getNodePath()
+		self.canUseShift = True
 		
 		# Snowball Init
 		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerObj)
@@ -90,7 +91,9 @@ class SMWorld(DirectObject):
 		# GUI
 		self.GUI = SMGUI()
 		self.snowflakeCounter = SMGUICounter("snowflake", 3) # Replace 3 with # of snowflakes in level.
+		self.snowMeter = SMGUIMeter(100)
 		self.GUI.addElement("snowflake", self.snowflakeCounter)
+		self.GUI.addElement("snowMeter", self.snowMeter)
 
 		# AI
 		self.goat1 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -70, -95, 5)
@@ -119,6 +122,7 @@ class SMWorld(DirectObject):
 		self.accept('enter', self.pauseUnpause)
 		self.accept('f1', self.toggleDebug)
 		
+		self.accept('lshift-up', self.enableShiftActions)
 		self.accept('mouse1', self.enableCameraControl)
 		self.accept('mouse1-up', self.disableCameraControl)
 		self.accept('wheel_up', self.camObj.zoomIn)
@@ -175,6 +179,13 @@ class SMWorld(DirectObject):
 	
 	def disableCameraControl(self):
 		self.cameraControl = False
+		
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Enables the use of shift actions again.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def enableShiftActions(self):
+		self.canUseShift = True
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Respawns the yeti's snowball.
@@ -415,26 +426,44 @@ class SMWorld(DirectObject):
 			self.playerObj.stop()
 
 		# Jump
-
 		if(self.kh.poll(" ") and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
 			self.playerObj.jump()
-
-		# Snowball Rolling
-		if(self.kh.poll("lshift") and not(self.sbCollideFlag)):
+			
+		# Shift-based actions
+		if(self.kh.poll("lshift") and not(self.sbCollideFlag) and self.canUseShift):
+		
+			# If there's another snowball already placed
 			if(self.ballObj.exists() and not(self.ballObj.isRolling())):
 				self.ballObj.respawn()
+				
+			# If we're rolling a snowball
 			elif(self.ballObj.isRolling()):
-				if(self.kh.poll("w")):
+			
+				# Absorb snowball
+				if(self.kh.poll("v")):
+					self.canUseShift = False
+					snowAmt = self.ballObj.getSnowAmount()
+					self.snowMeter.fillBy(snowAmt)
+					self.ballObj.destroy()
+					
+				# Go to iceball throwing mode
+				elif(self.kh.poll("b")):
+					print("TODO: Ice ball throwing mode.")
+					
+				# Grow the snowball
+				elif(self.kh.poll("w")):
 					self.ballObj.grow()
+					
+			# Spawn a new snowball
 			elif(self.ballObj.exists() == False):
 				self.ballObj.respawn()
+				
+		# If the player is not pressing shift
 		else:
 			if(self.ballObj.isRolling()):
 				self.ballObj.dropBall()
 
 		base.win.movePointer(0, 400, 300)
-
-		# self.hmTerrain.setFocalPoint(self.playerObj.getPosition())
 		
 		# So updating the stats is VERY expensive.
 		if (self.debugNode.isHidden() == False):

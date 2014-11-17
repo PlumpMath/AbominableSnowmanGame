@@ -1,6 +1,6 @@
 from panda3d.core import Vec3, Point3, NodePath
 
-from math import sin, cos, pi
+from math import sin, cos, pi, floor
 
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletCylinderShape
@@ -33,6 +33,14 @@ class SMBall():
 	def isRolling(self):
 		return self.rollState
 
+	def getSnowAmount(self):
+		result = 0
+		size = self.ballModel.getScale().getX()
+		if(self.rollState and size > 2.0):
+			size = floor(size)
+			result += (size * size)
+		return result
+		
 	def exists(self):
 		return self.ballExists
 	
@@ -41,6 +49,13 @@ class SMBall():
 		
 	def getNodePath(self):
 		return self.ballNP
+	
+	def destroy(self):
+		self.ballNP.removeNode()
+		self.ballModel.detachNode()
+		self.ballNP = NodePath()
+		self.ballExists = False
+		self.rollState = False
 	
 	def respawn(self):
 	
