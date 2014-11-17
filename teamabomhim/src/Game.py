@@ -39,7 +39,7 @@ class Game(DirectObject):
         def newGame(self):
                 self.hideMenu()
                 # Loading screens will be added here in place of direct map invocation.
-                self.world = SMWorld(self.gameState, "map01", -30, self.textObj, self.audioMgr)
+                self.world = SMWorld(self.gameState, "maptut", -30, self.textObj, self.audioMgr)
 
         def continueGame(self):
                 # When saving game state is implemented it will be added here.

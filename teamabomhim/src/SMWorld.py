@@ -4,6 +4,7 @@ from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode, BulletGhostNode
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
 from panda3d.bullet import ZUp
+from random import randint
 
 from direct.showbase.DirectObject import DirectObject
 from direct.showbase.Transitions import Transitions
@@ -44,7 +45,7 @@ class SMWorld(DirectObject):
 		#close file
 		ctrlFl.close()
 		# Metadata variables
-		self.playerStart = Point3(0,0,0)
+		self.playerStart = Point3(-75,7,23)
 		self.snowflakeCount = 0
 		
 		# Create new instances of our various objects
@@ -81,8 +82,8 @@ class SMWorld(DirectObject):
 		self.cameraControl = False
 		
 		# Collectables
-		self.collectable1 = SMCollect(self.worldBullet, self.worldObj, -80, -80, -5)
-		self.collectNP1 = self.collectable1.getNodePath()
+		#self.collectable1 = None
+		#self.collectNP1 = None
 
 		# GUI
 		self.GUI = SMGUI()
@@ -140,17 +141,17 @@ class SMWorld(DirectObject):
 		
 		# Added some props to the world.
 		# TODO: Use map metadata to load these instead of hardcoding them.
-		self.playerNP.setH(90)
-		cave = loader.loadModel("../res/models/cave_tunnel.egg")
-		cave.setScale(5)
-		cave.setR(180)
-		cave.setPos(45, 0, -13)
-		cave.reparentTo(render)
+		#self.playerNP.setH(90)
+		#cave = loader.loadModel("../res/models/cave_tunnel.egg")
+		#cave.setScale(5)
+		#cave.setR(180)
+		#cave.setPos(45, 0, -13)
+		#cave.reparentTo(render)
 		
-		planeFront = loader.loadModel("../res/models/plane_front.egg")
-		planeFront.setScale(5)
-		planeFront.setPos(-70, -28, -13)
-		planeFront.reparentTo(render)
+		#planeFront = loader.loadModel("../res/models/plane_front.egg")
+		#planeFront.setScale(5)
+		#planeFront.setPos(-70, -28, -13)
+		#planeFront.reparentTo(render)
 		
 		# Skybox formed
 		skybox = loader.loadModel("../res/models/skybox.egg")
@@ -282,12 +283,22 @@ class SMWorld(DirectObject):
 		# Here begins the scenery mapping
 		treeModel = loader.loadModel("../res/models/tree_1.egg")
 		rockModel = loader.loadModel("../res/models/rock_1.egg")
+		rock2Model = loader.loadModel("../res/models/rock_2.egg")
+		rock3Model = loader.loadModel("../res/models/rock_3.egg")
+		caveModel = loader.loadModel("../res/models/cave_tunnel.egg")
+		planeFrontModel = loader.loadModel("../res/models/plane_front.egg")
+		planeWingModel = loader.loadModel("../res/models/plane_wing.egg")
 		texpk = loader.loadTexture(scmPath).peek()
 		
 		# GameObject nodepath for flattening
 		objNP = render.attachNewNode("gameObjects")
 		treeNP = objNP.attachNewNode("goTrees")
 		rockNP = objNP.attachNewNode("goRocks")
+		rock2NP = objNP.attachNewNode("goRocks2")
+		rock3NP = objNP.attachNewNode("goRocks3")
+		caveNP = objNP.attachNewNode("goCave")
+		planeFrontNP = objNP.attachNewNode("goPlaneFront")
+		planeWingNP = objNP.attachNewNode("goPlaneWing")
 		
 		for i in range(0, texpk.getXSize()):
 			for j in range(0, texpk.getYSize()):
@@ -297,12 +308,56 @@ class SMWorld(DirectObject):
 					newTree = treeNP.attachNewNode("treeNode")
 					treeModel.instanceTo(newTree)
 					newTree.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
-					# newTree.setScale can add some nice randomized scaling here.
+					newTree.setScale(randint(0,4))
 					
 				if(int(color.getX() * 255.0) == 128):
 					newRock = render.attachNewNode("newRock")
 					newRock.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					rockModel.instanceTo(newRock)
+					
+				if(int(color.getX() * 255.0) == 77):
+					newRock2 = render.attachNewNode("newRock2")
+					newRock2.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					rock2Model.instanceTo(newRock2)
+					
+				if(int(color.getX() * 255.0) == 102):
+					newRock3 = render.attachNewNode("newRock3")
+					newRock3.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					rock3Model.instanceTo(newRock3)
+					
+				if(int(color.getX() * 255.0) == 64):
+					newCave = render.attachNewNode("newCave")
+					newCave.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					newCave.setScale(5)
+					newCave.setP(180)
+					caveModel.instanceTo(newCave)
+				
+				if(int(color.getX() * 255.0) == 191):
+					newPlaneFront = render.attachNewNode("newPlaneFront")
+					newPlaneFront.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					newPlaneFront.setScale(6)
+					planeFrontModel.instanceTo(newPlaneFront)
+					
+				if(int(color.getX() * 255.0) == 179):
+					newPlaneWing = render.attachNewNode("newPlaneWing")
+					newPlaneWing.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					newPlaneWing.setScale(6)
+					newPlaneWing.setH(250)
+					newPlaneWing.setR(180)
+					newPlaneWing.setP(135)
+					planeWingModel.instanceTo(newPlaneWing)
+				
+				if(int(color.getX() * 255.0) == 230):
+					self.collectable1 = SMCollect(self.worldBullet, self.worldObj, i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					self.collectNP1 = self.collectable1.getNodePath()
+					
+				if(int(color.getX() * 255.0) == 217):
+					self.collectable2 = SMCollect(self.worldBullet, self.worldObj, i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					self.collectNP2 = self.collectable2.getNodePath()
+					
+				if(int(color.getX() * 255.0) == 204):
+					self.collectable3 = SMCollect(self.worldBullet, self.worldObj, i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					self.collectNP3 = self.collectable3.getNodePath()
 					
 		# render.flattenStrong()
 		self.hmTerrainNP.reparentTo(render)
@@ -522,7 +577,14 @@ class SMWorld(DirectObject):
 		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP1) and self.collectable1.exists()):
 			self.collectable1.destroy()
 			self.snowflakeCounter.increment()
-
+			
+		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP2) and self.collectable2.exists()):
+			self.collectable2.destroy()
+			self.snowflakeCounter.increment()
+		
+		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP3) and self.collectable3.exists()):
+			self.collectable3.destroy()
+			self.snowflakeCounter.increment()
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the debug text.

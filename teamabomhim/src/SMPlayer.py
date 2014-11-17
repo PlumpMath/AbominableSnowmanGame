@@ -101,7 +101,8 @@ class SMPlayer():
 		
 		playerNP = self.worldNP.attachNewNode(playerNode)
 		playerNP.setPos(x, y, z)
-		playerNP.setH(0)
+		#playerNP.setP(90)
+		playerNP.setH(270)
 		self.yetiModel.reparentTo(playerNP)
 		self.bulletWorld.attachRigidBody(playerNP.node())
 		return playerNP

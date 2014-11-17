@@ -35,6 +35,7 @@ class SMCollect():
 		self.world.attachGhost(ghostNode)
 		visualCN = loader.loadModel("../res/models/snowflake.egg")
 		visualCN.reparentTo(collectNode)
+		visualCN.setScale(2)
 		return collectNode
 		
 	def destroy(self):
