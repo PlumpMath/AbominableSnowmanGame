@@ -15,12 +15,16 @@ class SMCollect():
 	def __init__(self, world, worldNP, sx, sy, sz):
 		self.world = world
 		self.worldNP = worldNP
+		self.collected = False
 		self.collectShape = BulletBoxShape(Vec3(3, 3, 3))
 		self.collectGN = BulletGhostNode('Box')
 		self.collectGN.addShape(self.collectShape)
 		self.collectNP = self.create(sx, sy, sz, self.collectGN)
 		print("Collectable Initialized")
-		
+	
+	def exists(self):
+		return not(self.collected)
+	
 	def getNodePath(self):
 		return self.collectGN
 	
@@ -34,6 +38,7 @@ class SMCollect():
 		return collectNode
 		
 	def destroy(self):
+		self.collected = True
 		self.world.removeGhost(self.collectGN)
 		self.collectNP.removeNode()
 		

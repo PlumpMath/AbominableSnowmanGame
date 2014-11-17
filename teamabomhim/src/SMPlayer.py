@@ -54,6 +54,7 @@ class SMPlayer():
 		self.sc = 0.00
 		self.ic = 0.00
 		self.fric = 0.45
+		self.snowAbsorbed = 0 # This should be an int.
 		# Stuff for reading and displaying information from the maps.
 		self.FPK = loader.loadTexture('../maps/' + self.smWorld.mapName + '-f.png').peek()
 		self.IPK = loader.loadTexture('../maps/' + self.smWorld.mapName + '-i.png').peek()

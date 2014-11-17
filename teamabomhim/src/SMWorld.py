@@ -18,7 +18,8 @@ from SMCollect import SMCollect
 from SMBall import SMBall
 from SMAI import SMAI
 from SMGUI import SMGUI
-from SMGUIElement import SMGUIElement
+from SMGUICounter import SMGUICounter
+from SMGUIMeter import SMGUIMeter
 
 # Global gravity constant (9.81 is for scrubs)
 GRAVITY = 96
@@ -88,8 +89,8 @@ class SMWorld(DirectObject):
 
 		# GUI
 		self.GUI = SMGUI()
-		self.snowflakeCounter = SMGUIElement("Snowflakes: ", 3)
-		self.GUI.addElement("snowflakes", self.snowflakeCounter)
+		self.snowflakeCounter = SMGUICounter("snowflake", 3) # Replace 3 with # of snowflakes in level.
+		self.GUI.addElement("snowflake", self.snowflakeCounter)
 
 		# AI
 		self.goat1 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -70, -95, 5)
@@ -497,9 +498,9 @@ class SMWorld(DirectObject):
 			self.playerObj.snapToTerrain(th, self.hmHeight)
 		
 		# Collision: Player x Snowflake
-		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP1)):
+		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP1) and self.collectable1.exists()):
 			self.collectable1.destroy()
-			self.snowflakeCounter.changeValue(1)
+			self.snowflakeCounter.increment()
 
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
