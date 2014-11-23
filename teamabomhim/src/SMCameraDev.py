@@ -146,5 +146,6 @@ class SMCamera():
 		self.camNP.setPos(self.distance * (-cx), self.distance * (-cy), cz)
 		self.lookAtPlayer()
 		
-
+	def getNodePath(self):
+		return self.camNP
 
