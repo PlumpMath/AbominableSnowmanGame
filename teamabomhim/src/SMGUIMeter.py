@@ -14,12 +14,15 @@ class SMGUIMeter():
 			self.value = self.maxValue
 		else:
 			self.value += amt
-		
+	
 	def emptyBy(self, amt):
 		if(self.value - amt < 0):
 			self.value = self.maxValue
 		else:
 			self.value = 0
+	
+	def updateSnow(self, playerObj):
+		self.value = playerObj.getSnow()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Returns the GUI element type.

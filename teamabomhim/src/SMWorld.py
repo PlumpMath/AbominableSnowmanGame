@@ -475,9 +475,11 @@ class SMWorld(DirectObject):
 		# Jump
 		if(self.kh.poll(self.keymap['Space']) and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
 			self.playerObj.jump()
+		else:
+			self.playerObj.resetJump()
 			
 		# Shift-based actions
-		if(self.kh.poll("lshift") and not(self.sbCollideFlag) and self.canUseShift):
+		if(self.kh.poll("lshift") and not(self.sbCollideFlag) and not(self.playerObj.getAirborneFlag()) and self.canUseShift):
 		
 			# If there's another snowball already placed
 			if(self.ballObj.exists() and not(self.ballObj.isRolling())):
@@ -490,7 +492,8 @@ class SMWorld(DirectObject):
 				if(self.kh.poll("v")):
 					self.canUseShift = False
 					snowAmt = self.ballObj.getSnowAmount()
-					self.snowMeter.fillBy(snowAmt)
+					self.playerObj.addSnow(snowAmt)
+					# self.snowMeter.fillBy(snowAmt)
 					self.ballObj.destroy()
 					
 				# Go to iceball throwing mode
@@ -573,7 +576,7 @@ class SMWorld(DirectObject):
 			th = self.getTerrainHeight(px, py)
 			self.playerObj.snapToTerrain(th, self.hmHeight)
 		
-		# Collision: Player x Snowflake
+		# Collision: Player x Snowflakes
 		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP1) and self.collectable1.exists()):
 			self.collectable1.destroy()
 			self.snowflakeCounter.increment()
@@ -585,6 +588,8 @@ class SMWorld(DirectObject):
 		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP3) and self.collectable3.exists()):
 			self.collectable3.destroy()
 			self.snowflakeCounter.increment()
+			
+		self.snowMeter.updateSnow(self.playerObj)
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the debug text.
@@ -606,8 +611,8 @@ class SMWorld(DirectObject):
 		ry = str(round(self.downRayTest.getY(), 2))
 		rz = str(round(self.terrSteepness, 2))
 		fric = str(round(self.playerObj.getFriction(), 2))
-		ip = str(round(self.playerObj.getIce(), 2))
-		sp = str(round(self.playerObj.getSnow(), 2))
+		ip = str(round(self.playerObj.getIceCoefficient(), 2))
+		sp = str(round(self.playerObj.getSnowCoefficient(), 2))
 		tHeight = str(round(self.getTerrainHeight(x, y), 1))
 		self.textObj.editText("yetiPos", "Position: (" + sx + ", " + sy + ", " + sz + ")")
 		self.textObj.editText("yetiVel", "Velocity: (" + vx + ", " + vy + ", " + vz + ")")

@@ -5,7 +5,7 @@ from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
 from panda3d.bullet import ZUp
-from math import sin, cos, pi
+from math import sin, cos, pi, sqrt
 
 # Physics attributes
 MASS = 200.0
@@ -14,12 +14,18 @@ DEG_TO_RAD = pi/180
 MAX_VEL_XY = 50
 MAX_VEL_Z = 5000
 MOVE_SPEED = 30.0 * 100000
-JUMP_FORCE = 7.0 * 100000
+JUMP_FORCE = 5.0 * 100000
 STOP_DAMPING = 5
 JMP_STOP_DAMPING = 0.88
 TURN_DAMPING = 0.92
 SLIP_THRESHOLD = 0.30
+JUMP_CONTROL_TIME = 0.20
 PNT = Point3(0,0,0)
+
+# Snow-based Actions
+MAX_SNOW = 100.0
+COST_DOUBLE_JUMP = 8.0
+COST_AIR_DASH = 16.0
 
 # Smooth this out later
 SNOW_HEIGHT = -3.5
@@ -47,6 +53,9 @@ class SMPlayer():
 		self.audioMgr = audMgr
 		self.playerNP = self.setupPlayer(self.startX, self.startY, self.startZ)
 		self.isAirborne = True
+		self.jumpDown = False
+		self.doubleJumping = False
+		self.doubleJumpCount = 0
 		self.rollingSnowball = False
 		self.terrainType = -1
 		self.velocity = Vec3(0,0,0)
@@ -114,22 +123,61 @@ class SMPlayer():
 	def getPlayerNode(self):
 		return playerNode
 	
+	def addSnow(self, amt):
+		if(self.snowAbsorbed + amt >= MAX_SNOW):
+			self.snowAbsorbed = MAX_SNOW
+		else:
+			self.snowAbsorbed += amt
+	
+	def setSnow(self, value):
+		self.snowAbsorbed = value
+	
+	def getSnow(self):
+		return self.snowAbsorbed
+	
+	def resetJump(self):
+		self.jumpDown = False
+	
+	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
-	# Makes the player jump if they are not already jumping.
+	# Makes the player jump if they are not already jumping, or double jump if they have enough Mahou Shoujo power.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def jump(self):
-		if(self.isAirborne == False):
-			self.jumpTime = 0.85
+	
+		# This line is long. 
+		if((self.snowAbsorbed >= COST_DOUBLE_JUMP * (self.doubleJumpCount + 1)) and self.isAirborne == True and self.jumpDown == False and self.doubleJumpCount < 2):
+			self.jumpDown = True
+			self.doubleJumping = False
+			self.doubleJumpCount += 1
+			# print("DOUBLEJUMP% HYPE! Kreygasm Kreygasm Kreygasm")
+			self.snowAbsorbed -= (COST_DOUBLE_JUMP * self.doubleJumpCount)
+			
+			# The closer to 0, the more force, otherwise, it's less.
+			vz = self.getVelocity().getZ()
+			if(vz < 0.1):
+				vz = 0.1
+			zForce = 3 / sqrt(abs(vz))
+			if (zForce > 1.0):
+				zForce = 1.0
+			print(zForce)
+			self.applyForce(Vec3(0, 0, JUMP_FORCE * zForce))
+			
+		elif(self.isAirborne == False and self.jumpDown == False):
+			self.doubleJumpCount = 0
+			self.jumpDown = True
+			self.doubleJumping = False
+			self.jumpTime = JUMP_CONTROL_TIME
 			v = self.getVelocity()
 			self.setAirborneFlag(True)
 			self.setFactor(1, 1, 1)
 			self.setVelocity(Vec3(v.getX(), v.getY(), 0))
 			# self.audioMgr.playSFX("yetiJump01")
 			self.applyForce(Vec3(0, 0, JUMP_FORCE))
-		elif(self.jumpTime > 0):
-			self.applyForce(Vec3(0, 0, JUMP_FORCE * globalClock.getDt() * self.jumpTime))
-			self.jumpTime = self.jumpTime - 0.1
+		elif(self.jumpTime > 0 and self.jumpDown == True and self.doubleJumping == False):
+			dt = globalClock.getDt()
+			self.applyForce(Vec3(0, 0, JUMP_FORCE * dt * self.jumpTime * 30))
+			self.jumpTime -= dt
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Returns the airborne flag.
@@ -285,14 +333,14 @@ class SMPlayer():
 	# Gets the snow coefficient of the player's (x,y)
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def getSnow(self):
+	def getSnowCoefficient(self):
 		return self.sc
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Gets the ice coefficient of the player's (x,y)
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def getIce(self):
+	def getIceCoefficient(self):
 		return self.ic
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -58,6 +58,7 @@ class SMGUICounter():
 			y = self.getYPos()
 			if(y >= MAX_PEEK_HEIGHT):
 				self.setState(ST_IDLE)
+				self.life = 0.0
 			else:
 				self.setYPos(y + PEEK_RATE * dt)
 		elif(state == ST_PEEK_WAIT):
