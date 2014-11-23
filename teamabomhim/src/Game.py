@@ -4,6 +4,7 @@ from direct.showbase.DirectObject import DirectObject
 from direct.gui.OnscreenText import OnscreenText
 from direct.gui.DirectGui import *
 
+
 from SMWorld import SMWorld
 from SMText import SMText
 from SMAudioManager import SMAudioManager

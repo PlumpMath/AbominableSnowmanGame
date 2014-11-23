@@ -1,5 +1,10 @@
 from panda3d.core import BitMask32, Point2, Point3, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage, VBase4, NodePath
 from panda3d.core import WindowProperties
+from panda3d.physics import BaseParticleEmitter,BaseParticleRenderer
+from panda3d.physics import PointParticleFactory,SpriteParticleRenderer
+from panda3d.physics import LinearNoiseForce,DiscEmitter
+from direct.particles.Particles import Particles
+from direct.particles.ParticleEffect import ParticleEffect
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode, BulletGhostNode
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
@@ -91,6 +96,15 @@ class SMWorld(DirectObject):
 		self.snowMeter = SMGUIMeter(100)
 		self.GUI.addElement("snowflake", self.snowflakeCounter)
 		self.GUI.addElement("snowMeter", self.snowMeter)
+		
+		#Snowy Outside
+		base.enableParticles()
+		self.p = ParticleEffect()
+		self.p.cleanup()
+		self.p = ParticleEffect()
+		self.p.loadConfig('snow.ptf')        
+		self.p.start(self.camObj.getNodePath())
+		self.p.setPos(0.00, 0.500, 0.000)
 
 		# AI
 		self.goat1 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -70, -95, 5)
