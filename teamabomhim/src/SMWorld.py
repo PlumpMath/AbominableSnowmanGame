@@ -65,6 +65,7 @@ class SMWorld(DirectObject):
 		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, self.playerStart, self.audioMgr)
 		self.playerNP = self.playerObj.getNodePath()
 		self.canUseShift = True
+		self.canAirDash = True
 		
 		# Snowball Init
 		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerObj)
@@ -197,6 +198,9 @@ class SMWorld(DirectObject):
 	
 	def enableShiftActions(self):
 		self.canUseShift = True
+		
+	def disableShiftActions(self):
+		self.canUseShift = False
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Respawns the yeti's snowball.
@@ -461,9 +465,7 @@ class SMWorld(DirectObject):
 		# Go through the collision and flag tests, and update them
 		self.doPlayerTests()
 
-		
-
-		# Movement and camera control
+		# Rotation and camera movement
 		if self.kh.poll(self.keymap['Left']):
 			self.playerObj.turn(True)
 		elif self.kh.poll(self.keymap['Right']):
@@ -475,8 +477,7 @@ class SMWorld(DirectObject):
 		
 		self.camObj.calculatePosition()
 		
-		# Rotation
-
+		# Movement
 		if self.kh.poll(self.keymap['Forward']):
 			self.playerObj.move(True)
 			self.camObj.rotateTowards(90)
@@ -491,7 +492,12 @@ class SMWorld(DirectObject):
 			self.playerObj.jump()
 		else:
 			self.playerObj.resetJump()
-			
+		
+		# Air Dash
+		if(self.kh.poll(self.keymap['airDash']) and self.playerObj.getAirborneFlag() == True and self.canAirDash == True):
+			self.canAirDash = False
+			self.playerObj.airDash()
+		
 		# Shift-based actions
 		if(self.kh.poll("lshift") and not(self.sbCollideFlag) and not(self.playerObj.getAirborneFlag()) and self.canUseShift):
 		
@@ -565,6 +571,7 @@ class SMWorld(DirectObject):
 			if(self.playerObj.getAirborneFlag()):
 				self.audioMgr.playSFX("snowCrunch01")
 			self.playerObj.setAirborneFlag(False)
+			self.canAirDash = True
 			self.playerObj.setFactor(1, 1, 1)
 		
 		# Collision: Player x Snowball

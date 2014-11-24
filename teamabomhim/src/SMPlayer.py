@@ -150,7 +150,6 @@ class SMPlayer():
 			self.jumpDown = True
 			self.doubleJumping = False
 			self.doubleJumpCount += 1
-			# print("DOUBLEJUMP% HYPE! Kreygasm Kreygasm Kreygasm")
 			self.snowAbsorbed -= (COST_DOUBLE_JUMP * self.doubleJumpCount)
 			
 			# The closer to 0, the more force, otherwise, it's less.
@@ -160,7 +159,6 @@ class SMPlayer():
 			zForce = 3 / sqrt(abs(vz))
 			if (zForce > 1.0):
 				zForce = 1.0
-			print(zForce)
 			self.applyForce(Vec3(0, 0, JUMP_FORCE * zForce))
 			
 		elif(self.isAirborne == False and self.jumpDown == False):
@@ -178,6 +176,17 @@ class SMPlayer():
 			dt = globalClock.getDt()
 			self.applyForce(Vec3(0, 0, JUMP_FORCE * dt * self.jumpTime * 30))
 			self.jumpTime -= dt
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Performs an air dash.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def airDash(self):
+		if(self.snowAbsorbed >= COST_AIR_DASH):
+			self.snowAbsorbed -= COST_AIR_DASH
+			fx = -sin(self.getRotation() * DEG_TO_RAD)
+			fy = cos(self.getRotation() * DEG_TO_RAD)
+			self.setVelocity(Vec3(MAX_VEL_XY * fx * 8, MAX_VEL_XY * fy * 8, -5))
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Returns the airborne flag.

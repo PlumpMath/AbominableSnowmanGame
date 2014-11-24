@@ -1,2 +1,2 @@
 {"Forward":"w", "Back":"s","Left":"a", "Right":"d", "Space": " ", "Left Shift":"1shift", "absorb":"v","iceball":"b",
-"debug":"f1", "pause":"enter", "exit":"esc"} 
+"debug":"f1", "pause":"enter", "exit":"esc", "airDash":"e"} 

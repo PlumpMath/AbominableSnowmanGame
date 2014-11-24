@@ -4,7 +4,6 @@ from direct.showbase.DirectObject import DirectObject
 from direct.gui.OnscreenText import OnscreenText
 from direct.gui.DirectGui import *
 
-
 from SMWorld import SMWorld
 from SMText import SMText
 from SMAudioManager import SMAudioManager
@@ -16,7 +15,7 @@ class Game(DirectObject):
 	def __init__(self):
 		print("LINK START")
 		self.textObj = SMText()
-		self.textObj.addText("test", "abom20141113")
+		self.textObj.addText("test", "abom20141123")
 		
 		self.audioMgr = SMAudioManager()
 
@@ -61,7 +60,8 @@ class Game(DirectObject):
                 self.continueBtn.show()
                 self.quitBtn.show()
 
-# PStatClient.connect()
 base.setFrameRateMeter(True)
 g = Game()
 run()
+
+# I-It's not like I wanted you to look at the source code or anything! B... Baka!
