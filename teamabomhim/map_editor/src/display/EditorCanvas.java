@@ -12,36 +12,41 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
+import java.io.Serializable;
 import java.util.Stack;
 
 import javax.swing.JPanel;
+
+import backend.ImageIDTuple;
 
 /**
  * @author Benjamin Sladewski
  *
  * TODO: Comment me.
  */
-public class EditorCanvas extends JPanel {
+public class EditorCanvas extends JPanel implements Serializable {
 
     /**
      * TODO: Comment me.
      */
     private static final long serialVersionUID = -2593841092399324456L;
     
-    /**
-     * TODO: Comment me.
-     */
-    private Stack<BufferedImage> undoBuffer;
+    private Integer ID;
     
     /**
      * TODO: Comment me.
      */
-    private Stack<BufferedImage> redoBuffer;
+    private transient Stack<ImageIDTuple> undoBuffer;
     
     /**
      * TODO: Comment me.
      */
-    private BufferedImage map;
+    private transient Stack<ImageIDTuple> redoBuffer;
+    
+    /**
+     * TODO: Comment me.
+     */
+    private transient ImageIDTuple map;
     
     /**
      * TODO: Comment me.
@@ -51,20 +56,25 @@ public class EditorCanvas extends JPanel {
     /**
      * TODO: Comment me.
      */
-    private boolean isDrawing;
+    private Boolean isDrawing = false;
     
     /**
      * TODO: Comment me.
      */
-    public EditorCanvas(int width, int height) {
+    public EditorCanvas(int width, int height, int ID) {
         // TODO: Comment me.
-        undoBuffer = new Stack<BufferedImage>();
-        redoBuffer = new Stack<BufferedImage>();
-        map = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        this.ID = ID;
+        undoBuffer = new Stack<ImageIDTuple>();
+        redoBuffer = new Stack<ImageIDTuple>();
+        map = new ImageIDTuple(new BufferedImage(width, height,
+                              BufferedImage.TYPE_INT_RGB), ID);
         setOpaque(false);
         stroke = new Path2D.Float();
         setDrawing(false);
-
+        addListeners();
+    }
+    
+    private void addListeners() {
         // TODO: Comment me.
         addMouseListener(new MouseListener() {
 
@@ -171,11 +181,12 @@ public class EditorCanvas extends JPanel {
      * @param bi
      * @return
      */
-    public BufferedImage duplicateImage(BufferedImage bi){
-        BufferedImage bn = new BufferedImage(bi.getWidth(), bi.getHeight(), 
-                                             bi.getType());
-        Graphics g = bn.getGraphics();
-        g.drawImage(bi, 0, 0, null);
+    public ImageIDTuple duplicateImage(ImageIDTuple bi){
+        ImageIDTuple bn = new ImageIDTuple(
+                                new BufferedImage(bi.image.getWidth(),
+                                bi.image.getHeight(), bi.image.getType()), ID);
+        Graphics g = bn.image.getGraphics();
+        g.drawImage(bi.image, 0, 0, null);
         g.dispose();
         return bn;
     }
@@ -187,9 +198,9 @@ public class EditorCanvas extends JPanel {
         if(!redoBuffer.isEmpty())
             redoBuffer.clear();
         undoBuffer.push(duplicateImage(map));
-        float tx = ((float) map.getWidth()) / ((float) this.getWidth());
-        float ty = ((float) map.getHeight()) / ((float) this.getHeight());
-        drawStroke(map.createGraphics(), tx, ty);
+        float tx = ((float) map.image.getWidth()) / ((float) this.getWidth());
+        float ty = ((float) map.image.getHeight()) / ((float) this.getHeight());
+        drawStroke(map.image.createGraphics(), tx, ty);
         stroke.reset();
     }
     
@@ -210,6 +221,15 @@ public class EditorCanvas extends JPanel {
         g2d.draw(stroke);
         g2d.setTransform(at);
     }
+    
+    /**
+     * TODO: Comment me.
+     * 
+     * @return
+     */
+    public ImageIDTuple getImageTuple() {
+        return map;
+    }
 
     /* (non-Javadoc)
      * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
@@ -217,10 +237,14 @@ public class EditorCanvas extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Image toDraw = map.getScaledInstance(this.getWidth(), this.getHeight(),
-                       Image.SCALE_FAST);
+        Image toDraw = map.image.getScaledInstance(this.getWidth(),
+                       this.getHeight(), Image.SCALE_FAST);
         g.drawImage(toDraw, 0, 0, null);
         drawStroke(g, 1.0f, 1.0f);
+    }
+
+    public void swapImageTuple(ImageIDTuple it) {
+        map = it;
     }
 
 }

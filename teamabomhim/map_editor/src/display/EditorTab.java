@@ -2,15 +2,18 @@ package display;
 
 import java.awt.BorderLayout;
 import java.awt.Graphics;
+import java.io.Serializable;
 
 import javax.swing.JPanel;
+
+import backend.ImageIDTuple;
 
 /**
  * @author Benjamin Sladewski
  *
  * TODO: Comment me.
  */
-public class EditorTab extends JPanel {
+public class EditorTab extends JPanel implements Serializable {
 
     /**
      * TODO: Comment me.
@@ -21,6 +24,10 @@ public class EditorTab extends JPanel {
      * TODO: Comment me.
      */
     private EditorCanvas editorCanvas;
+    
+    private String displayName;
+    
+    private Integer ID;
 
     /**
      * TODO: Comment me.
@@ -28,9 +35,11 @@ public class EditorTab extends JPanel {
      * @param width
      * @param height
      */
-    public EditorTab(int width, int height) {
+    public EditorTab(int width, int height, String displayName) {
+        ID = displayName.hashCode();
         setLayout(new BorderLayout());
-        editorCanvas = new EditorCanvas(width, height);
+        setDisplayName(displayName);
+        editorCanvas = new EditorCanvas(width, height, ID);
         add(editorCanvas, BorderLayout.CENTER);
     }
 
@@ -52,12 +61,42 @@ public class EditorTab extends JPanel {
         this.editorCanvas = editorCanvas;
     }
     
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+    
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    /**
+     * TODO: Comment me.
+     *
+     * @return
+     */
+    public Integer getID() {
+        return ID;
+    }
+    
+    public ImageIDTuple getImageTuple() {
+        return editorCanvas.getImageTuple();
+    }
+
     /* (non-Javadoc)
      * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
      */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+    }
+
+    /**
+     * TODO: Comment me.
+     * 
+     * @param it
+     */
+    public void swapImageTuple(ImageIDTuple it) {
+        editorCanvas.swapImageTuple(it);
     }
 
 }
