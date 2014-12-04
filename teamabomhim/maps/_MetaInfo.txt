@@ -1,20 +1,13 @@
 :: MAP METADATA ::
 
-The first row of 513 pixels' values will hold data instead of gameObjects.
+map-1.dat
 
-Offset		Data
-0			Player's Initial X coordinate
-1			Player's Initial Y coordinate
-2			BGM ID
-3			Ambient ID
-4			Deathzone Height
-5			Snowflake Count
+Line-by-line values as follows:
 
-32			Snowflake Locations 3px:[x, y, z] (up to 9)
-64			Icicle Locations 3px:[x, y, z] (up to 9)
-96			Empty Rock Locations 4px:[model, x, y, z] (up to 16)
-160			Snowflake-bearing Rock Locations 3px:[x, y, z] (up to 4)
-172			(free)
-192			
-224			
-256			
+start X
+start Y
+start Z
+death height
+snowflake(x,y,z)
+snowflake(x,y,z)
+...

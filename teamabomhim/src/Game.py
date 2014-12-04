@@ -10,12 +10,10 @@ from SMAudioManager import SMAudioManager
 
 class Game(DirectObject):
 
-	gameState = -1
-
 	def __init__(self):
 		print("LINK START")
 		self.textObj = SMText()
-		self.textObj.addText("test", "abom20141123")
+		self.textObj.addText("test", "abom20141203")
 		
 		self.audioMgr = SMAudioManager()
 
@@ -38,8 +36,9 @@ class Game(DirectObject):
 
         def newGame(self):
                 self.hideMenu()
+				
                 # Loading screens will be added here in place of direct map invocation.
-                self.world = SMWorld(self.gameState, "maptut", -30, self.textObj, self.audioMgr)
+                self.world = SMWorld(1, self.textObj, self.audioMgr)
 
         def continueGame(self):
                 # When saving game state is implemented it will be added here.

@@ -12,25 +12,25 @@ from SMCollisionHandler import SMCollisionHandler
 from SMLighting import SMLighting
 
 class SMCollect():
-	def __init__(self, world, worldNP, sx, sy, sz):
+	def __init__(self, world, worldNP, sPos):
 		self.world = world
 		self.worldNP = worldNP
 		self.collected = False
 		self.collectShape = BulletBoxShape(Vec3(3, 3, 3))
 		self.collectGN = BulletGhostNode('Box')
 		self.collectGN.addShape(self.collectShape)
-		self.collectNP = self.create(sx, sy, sz, self.collectGN)
+		self.collectNP = self.create(sPos, self.collectGN)
 		print("Collectable Initialized")
 	
 	def exists(self):
 		return not(self.collected)
 	
-	def getNodePath(self):
+	def getNode(self):
 		return self.collectGN
 	
-	def create(self, x, y, z, ghostNode):
+	def create(self, pos, ghostNode):
 		collectNode = render.attachNewNode(ghostNode)
-		collectNode.setPos((x,y,z))
+		collectNode.setPos(pos)
 		collectNode.setCollideMask(BitMask32(0x0f))
 		self.world.attachGhost(ghostNode)
 		visualCN = loader.loadModel("../res/models/snowflake.egg")

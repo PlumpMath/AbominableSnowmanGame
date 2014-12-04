@@ -22,7 +22,7 @@ from SMCollisionHandler import SMCollisionHandler
 from SMLighting import SMLighting
 from SMCollect import SMCollect
 from SMBall import SMBall
-from SMAI import SMAI
+# from SMAI import SMAI
 from SMGUI import SMGUI
 from SMGUICounter import SMGUICounter
 from SMGUIMeter import SMGUIMeter
@@ -40,8 +40,43 @@ class SMWorld(DirectObject):
 	# (Game state, Map name, Height of death plane)
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def __init__(self, gameState, mapName, deathHeight, tObj, aObj):
+	def __init__(self, mapID, tObj, aObj):
 
+		self.mapID = mapID
+		
+		# EX: maps/map-1/map-1.yetimap
+		metaFile = open("../maps/map" + str(self.mapID) + "/map" + str(self.mapID) + ".yetimap", 'r')
+		metaLines = metaFile.readlines()
+		lineCount = len(metaLines)
+		self.snowflakeCount = lineCount - 2
+		
+		# First Line: Player's starting position
+		# EX: 50,50,50 (NO SPACES)
+		playerLine = metaLines[0]
+		playerPosList = playerLine.split(",")
+		playerInitX = int(playerPosList[0])
+		playerInitY = int(playerPosList[1])
+		playerInitZ = int(playerPosList[2])
+		self.playerStart = Point3(playerInitX, playerInitY, playerInitZ)
+		
+		# 2nd Line: Deathzone Height
+		# ONE INTEGER
+		deathHeight = int(metaLines[1])
+		
+		# Get dem snowflakes
+		self.snowflakePositions = []
+		print("Snowflake Count: " + str(self.snowflakeCount))
+		for i in xrange(0, self.snowflakeCount):
+			sfline = metaLines[i+2]
+			sfList = sfline.split(",")
+			sfx = int(sfList[0])
+			sfy = int(sfList[1])
+			sfz = int(sfList[2])
+			self.snowflakePositions.append(Point3(sfx, sfy, sfz))
+			print("New snowflake to add: (" + str(sfx) + "," + str(sfy) + "," + str(sfz) + ")")
+		
+		
+		
 		#load in controls
 		ctrlFl = open("ctrConfig.txt")
 		#will skip n lines where [n,]
@@ -49,17 +84,14 @@ class SMWorld(DirectObject):
 		self.keymap = eval(ctrlFl.read())
 		#close file
 		ctrlFl.close()
-		# Metadata variables
-		self.playerStart = Point3(-75,7,23)
-		self.snowflakeCount = 0
 		
 		# Create new instances of our various objects
-		self.mapName = mapName
+		self.mapName = str(mapID)
 		self.audioMgr = aObj
 		self.worldObj = self.setupWorld()
 		self.heightMap = self.setupHeightmap(self.mapName)
 		self.deathZone = self.setupDeathzone(deathHeight)
-		self.debugNode = self.setupDebug()
+		self.debugNode = self.setupDebug()	
 		
 		# Player Init
 		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, self.playerStart, self.audioMgr)
@@ -83,17 +115,12 @@ class SMWorld(DirectObject):
 		self.ligObj = SMLighting(Vec4(.4, .4, .4, 1), Vec3(-5, -5, -5), Vec4(2.0, 2.0, 2.0, 1.0))
 		
 		# Camera
-		# self.camObj = SMCamera(0, 0, 0, self.playerObj.getNodePath())
 		self.camObj = SMCamera(self.playerObj, self.worldBullet, self.worldObj)
 		self.cameraControl = False
-		
-		# Collectables
-		#self.collectable1 = None
-		#self.collectNP1 = None
 
 		# GUI
 		self.GUI = SMGUI()
-		self.snowflakeCounter = SMGUICounter("snowflake", 3) # Replace 3 with # of snowflakes in level.
+		self.snowflakeCounter = SMGUICounter("snowflake", self.snowflakeCount) # Replace 3 with # of snowflakes in level.
 		self.snowMeter = SMGUIMeter(100)
 		self.GUI.addElement("snowflake", self.snowflakeCounter)
 		self.GUI.addElement("snowMeter", self.snowMeter)
@@ -108,12 +135,11 @@ class SMWorld(DirectObject):
 		self.p.setPos(0.00, 0.500, 0.000)
 
 		# AI
-		self.goat1 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -70, -95, 5)
-		self.goat1.setBehavior("flee", self.playerNP)
-		self.goat2 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -80, -83, 5)
-
-		self.goat2.setBehavior("flee", self.playerNP)
-		print("AI Initialized")
+		# self.goat1 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -70, -95, 5)
+		# self.goat1.setBehavior("flee", self.playerNP)
+		# self.goat2 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -80, -83, 5)
+		# self.goat2.setBehavior("flee", self.playerNP)
+		# print("AI Initialized")
 		
 		# Debug Text
 		self.textObj = tObj
@@ -153,20 +179,6 @@ class SMWorld(DirectObject):
 		
 		# Play the BGM
 		self.audioMgr.playBGM("snowmanWind")
-		
-		# Added some props to the world.
-		# TODO: Use map metadata to load these instead of hardcoding them.
-		#self.playerNP.setH(90)
-		#cave = loader.loadModel("../res/models/cave_tunnel.egg")
-		#cave.setScale(5)
-		#cave.setR(180)
-		#cave.setPos(45, 0, -13)
-		#cave.reparentTo(render)
-		
-		#planeFront = loader.loadModel("../res/models/plane_front.egg")
-		#planeFront.setScale(5)
-		#planeFront.setPos(-70, -28, -13)
-		#planeFront.reparentTo(render)
 		
 		# Skybox formed
 		skybox = loader.loadModel("../res/models/skybox.egg")
@@ -215,12 +227,12 @@ class SMWorld(DirectObject):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def pauseUnpause(self):
-			if taskMgr.hasTaskNamed('UpdateTask'):
-					taskMgr.remove('UpdateTask')
-					self.transition.fadeScreen(0.5)
-			else:
-					taskMgr.add(self.update, 'UpdateTask')
-					self.transition.noFade()
+		if taskMgr.hasTaskNamed('UpdateTask'):
+			taskMgr.remove('UpdateTask')
+			self.transition.fadeScreen(0.5)
+		else:
+			taskMgr.add(self.update, 'UpdateTask')
+			self.transition.noFade()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Sets up the world and returns a NodePath of the BulletWorld
@@ -267,10 +279,14 @@ class SMWorld(DirectObject):
 		
 		# Automatically generate a heightmap mesh from a monochrome image.
 		self.hmHeight = 120
-		hmPath = "../maps/" + name + "-h.png"
-		imPath = "../maps/" + name + "-i.png"
-		smPath = "../maps/" + name + "-s.png"
-		scmPath = "../maps/" + name + "-sc.png"
+		hmPath = "../maps/map" + name + "/map" + name + "-h.png"
+		imPath = "../maps/map" + name + "/map" + name + "-i.png"
+		smPath = "../maps/map" + name + "/map" + name + "-s.png"
+		scmPath = "../maps/map" + name + "/map" + name + "-sc.png"
+		print(hmPath)
+		print(imPath)
+		print(smPath)
+		print(scmPath)
 		hmImg = PNMImage(Filename(hmPath))
 		hmShape = BulletHeightfieldShape(hmImg, self.hmHeight, ZUp)
 		hmNode = BulletRigidBodyNode('Terrain')
@@ -364,18 +380,13 @@ class SMWorld(DirectObject):
 					newPlaneWing.setR(180)
 					newPlaneWing.setP(135)
 					planeWingModel.instanceTo(newPlaneWing)
-				
-				if(int(color.getX() * 255.0) == 230):
-					self.collectable1 = SMCollect(self.worldBullet, self.worldObj, i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
-					self.collectNP1 = self.collectable1.getNodePath()
-					
-				if(int(color.getX() * 255.0) == 217):
-					self.collectable2 = SMCollect(self.worldBullet, self.worldObj, i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
-					self.collectNP2 = self.collectable2.getNodePath()
-					
-				if(int(color.getX() * 255.0) == 204):
-					self.collectable3 = SMCollect(self.worldBullet, self.worldObj, i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
-					self.collectNP3 = self.collectable3.getNodePath()
+
+		self.snowflakes = []
+		
+		for i in xrange(0, self.snowflakeCount):
+			print("Call " + str(i))
+			sf = SMCollect(self.worldBullet, self.worldObj, self.snowflakePositions[i])
+			self.snowflakes.append(sf)
 					
 		# render.flattenStrong()
 		self.hmTerrainNP.reparentTo(render)
@@ -413,7 +424,7 @@ class SMWorld(DirectObject):
 		self.hmTerrainNP.setTexture(ts, loader.loadTexture("../res/textures/snow_tex_1.png"))
 		self.hmTerrainNP.setTexScale(ts, 32, 32)
 
-		
+		# print(self.snowflakes)
 		
 		return hmNode
 	
@@ -545,6 +556,8 @@ class SMWorld(DirectObject):
 	
 	def doPlayerTests(self):
 		
+		# self.completeLevel()
+		
 		# Player's position
 		plPos = self.playerObj.getPosition()
 		px = plPos.getX()
@@ -588,7 +601,7 @@ class SMWorld(DirectObject):
 			self.playerObj.respawn()
 		
 		# Out of bounds checking
-		if(abs(px) > 255 or abs(py) > 255):
+		if(abs(px) > 254 or abs(py) > 254):
 			print("Player out of bounds!")
 			self.playerObj.respawn()
 		
@@ -598,17 +611,10 @@ class SMWorld(DirectObject):
 			self.playerObj.snapToTerrain(th, self.hmHeight)
 		
 		# Collision: Player x Snowflakes
-		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP1) and self.collectable1.exists()):
-			self.collectable1.destroy()
-			self.snowflakeCounter.increment()
-			
-		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP2) and self.collectable2.exists()):
-			self.collectable2.destroy()
-			self.snowflakeCounter.increment()
-		
-		if(self.colObj.didCollide(self.playerNP.node(), self.collectNP3) and self.collectable3.exists()):
-			self.collectable3.destroy()
-			self.snowflakeCounter.increment()
+		for i in xrange(0, self.snowflakeCount):
+			if(self.snowflakes[i].exists() and self.colObj.didCollide(self.playerNP.node(), self.snowflakes[i].getNode())):
+				self.snowflakes[i].destroy()
+				self.snowflakeCounter.increment()
 			
 		self.snowMeter.updateSnow(self.playerObj)
 		
@@ -650,7 +656,7 @@ class SMWorld(DirectObject):
 	def update(self, task):
 		dt = globalClock.getDt()
 		self.worldBullet.doPhysics(dt)
-		self.goat1.AIUpdate()
-		self.goat2.AIUpdate()
+		# self.goat1.AIUpdate()
+		# self.goat2.AIUpdate()
 		self.playerMove()
 		return task.cont
