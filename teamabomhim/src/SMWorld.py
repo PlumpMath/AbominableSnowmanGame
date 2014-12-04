@@ -11,6 +11,8 @@ from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderSha
 from panda3d.bullet import ZUp
 from random import randint
 
+from direct.gui.OnscreenText import OnscreenText
+
 from direct.showbase.DirectObject import DirectObject
 from direct.showbase.Transitions import Transitions
 
@@ -49,6 +51,7 @@ class SMWorld(DirectObject):
 		metaLines = metaFile.readlines()
 		lineCount = len(metaLines)
 		self.snowflakeCount = lineCount - 2
+		self.snowCount = 0
 		
 		# First Line: Player's starting position
 		# EX: 50,50,50 (NO SPACES)
@@ -325,55 +328,55 @@ class SMWorld(DirectObject):
 		texpk = loader.loadTexture(scmPath).peek()
 		
 		# GameObject nodepath for flattening
-		objNP = render.attachNewNode("gameObjects")
-		treeNP = objNP.attachNewNode("goTrees")
-		rockNP = objNP.attachNewNode("goRocks")
-		rock2NP = objNP.attachNewNode("goRocks2")
-		rock3NP = objNP.attachNewNode("goRocks3")
-		caveNP = objNP.attachNewNode("goCave")
-		planeFrontNP = objNP.attachNewNode("goPlaneFront")
-		planeWingNP = objNP.attachNewNode("goPlaneWing")
+		self.objNP = render.attachNewNode("gameObjects")
+		self.treeNP = self.objNP.attachNewNode("goTrees")
+		self.rockNP = self.objNP.attachNewNode("goRocks")
+		self.rock2NP = self.objNP.attachNewNode("goRocks2")
+		self.rock3NP = self.objNP.attachNewNode("goRocks3")
+		self.caveNP = self.objNP.attachNewNode("goCave")
+		self.planeFrontNP = self.objNP.attachNewNode("goPlaneFront")
+		self.planeWingNP = self.objNP.attachNewNode("goPlaneWing")
 		
 		for i in range(0, texpk.getXSize()):
 			for j in range(0, texpk.getYSize()):
 				color = VBase4(0, 0, 0, 0)
 				texpk.lookup(color, float(i) / texpk.getXSize(), float(j) / texpk.getYSize())
 				if(int(color.getX() * 255.0) == 255.0):
-					newTree = treeNP.attachNewNode("treeNode")
+					newTree = self.treeNP.attachNewNode("treeNode")
 					treeModel.instanceTo(newTree)
 					newTree.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					newTree.setScale(randint(0,4))
 					
 				if(int(color.getX() * 255.0) == 128):
-					newRock = render.attachNewNode("newRock")
+					newRock = self.rockNP.attachNewNode("newRock")
 					newRock.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					rockModel.instanceTo(newRock)
 					
 				if(int(color.getX() * 255.0) == 77):
-					newRock2 = render.attachNewNode("newRock2")
+					newRock2 = self.rock2NP.attachNewNode("newRock2")
 					newRock2.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					rock2Model.instanceTo(newRock2)
 					
 				if(int(color.getX() * 255.0) == 102):
-					newRock3 = render.attachNewNode("newRock3")
+					newRock3 = self.rock3NP.attachNewNode("newRock3")
 					newRock3.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					rock3Model.instanceTo(newRock3)
 					
 				if(int(color.getX() * 255.0) == 64):
-					newCave = render.attachNewNode("newCave")
+					newCave = self.caveNP.attachNewNode("newCave")
 					newCave.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					newCave.setScale(5)
 					newCave.setP(180)
 					caveModel.instanceTo(newCave)
 				
 				if(int(color.getX() * 255.0) == 191):
-					newPlaneFront = render.attachNewNode("newPlaneFront")
+					newPlaneFront = self.planeFrontNP.attachNewNode("newPlaneFront")
 					newPlaneFront.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					newPlaneFront.setScale(6)
 					planeFrontModel.instanceTo(newPlaneFront)
 					
 				if(int(color.getX() * 255.0) == 179):
-					newPlaneWing = render.attachNewNode("newPlaneWing")
+					newPlaneWing = self.planeWingNP.attachNewNode("newPlaneWing")
 					newPlaneWing.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					newPlaneWing.setScale(6)
 					newPlaneWing.setH(250)
@@ -615,8 +618,39 @@ class SMWorld(DirectObject):
 			if(self.snowflakes[i].exists() and self.colObj.didCollide(self.playerNP.node(), self.snowflakes[i].getNode())):
 				self.snowflakes[i].destroy()
 				self.snowflakeCounter.increment()
+				self.snowCount += 1
 			
 		self.snowMeter.updateSnow(self.playerObj)
+		
+		if(self.snowflakeCount == 3):
+			#Loading Screen
+			loadingText=OnscreenText("Loading...",1,fg=(1,1,1,1),pos=(0,0),align=TextNode.ACenter,scale=.07,mayChange=1)
+			base.graphicsEngine.renderFrame() 
+			base.graphicsEngine.renderFrame() 
+			base.graphicsEngine.renderFrame() 
+			base.graphicsEngine.renderFrame() 
+			
+			#destroy objects
+			self.worldBullet.removeRigidBody(self.heightMap)
+			self.hmTerrainNP.setPos(0,0,-200)
+			self.hmTerrainNP.removeNode()
+			self.objNP.removeNode()
+			self.treeNP.removeNode()
+			self.rockNP.removeNode()
+			self.rock2NP.removeNode()
+			self.rock3NP.removeNode()
+			self.caveNP.removeNode()
+			self.planeFrontNP.removeNode()
+			self.planeWingNP.removeNode()
+			self.hmNP.removeNode()
+			
+			#reset Snowflake Counter
+			self.snowCount = 0
+			
+			#load new map
+			self.heightMap = self.setupHeightmap("map01")
+			
+			loadingText.cleanup() 
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the debug text.

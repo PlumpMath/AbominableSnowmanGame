@@ -35,10 +35,18 @@ class Game(DirectObject):
 		self.accept('escape', base.userExit)
 
         def newGame(self):
-                self.hideMenu()
+				self.hideMenu()
 				
-                # Loading screens will be added here in place of direct map invocation.
-                self.world = SMWorld(1, self.textObj, self.audioMgr)
+                # Loading screen
+				loadingText=OnscreenText("Loading...",1,fg=(1,1,1,1),pos=(0,0),align=TextNode.ACenter,scale=.07,mayChange=1)
+				base.graphicsEngine.renderFrame() 
+				base.graphicsEngine.renderFrame() 
+				base.graphicsEngine.renderFrame() 
+				base.graphicsEngine.renderFrame()
+				
+				self.world = SMWorld(1, self.textObj, self.audioMgr)
+				
+				loadingText.cleanup()
 
         def continueGame(self):
                 # When saving game state is implemented it will be added here.
