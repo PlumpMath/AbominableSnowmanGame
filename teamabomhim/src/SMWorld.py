@@ -713,6 +713,20 @@ class SMWorld(DirectObject):
 		self.textObj.editText("terrSteepness", "Steepness: " + rz)
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# throw Snowball
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	def throw(self):
+		self.throwing = True
+		size = self.ballObj.getSize()
+		#zoom camera and grab pos you wish to throw
+		self.camObj.aimMode()
+		taskMgr.add(self.controlCamera, "camera-task")
+		rotation = self.camObj.getH()
+		pitch =self.camObj.getP()
+		self.ballObj.throwBall(size, pitch, rotation)
+		#fix camera
+		#self.throwing = False
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the world. Called every frame.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	

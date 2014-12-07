@@ -24,7 +24,8 @@ class SMCamera():
 		self.playerNP = pObj.getNodePath()
 		self.distance = 50.0
 		self.angle = 90.0
-		
+		self.aimMode=False
+
 		# Set up camera physics
 		camShape = BulletSphereShape(COL_RADIUS)
 		camRB = BulletRigidBodyNode("cameraRB")
@@ -126,7 +127,8 @@ class SMCamera():
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def lookAtPlayer(self):
-		base.cam.lookAt(self.playerNP)
+		#if(self.aimMode==False):
+			base.cam.lookAt(self.playerNP)
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Set the camera's position based on its distance, and the player's rotation.
@@ -149,3 +151,6 @@ class SMCamera():
 	def getNodePath(self):
 		return self.camNP
 
+	def aimMode(self):
+		self.aimMode = True
+		self.setDistance(25.0)

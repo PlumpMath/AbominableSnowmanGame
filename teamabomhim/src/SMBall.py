@@ -6,6 +6,8 @@ from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletCylinderShape
 from panda3d.bullet import ZUp
 
+DEG_TO_RAD = pi/180
+MOVE_SPEED = 30.0 * 100000
 INIT_SCALE = 1.5
 MAX_SCALE = 9
 SCALE_RATE = 1.5
@@ -116,3 +118,51 @@ class SMBall():
 			dt = globalClock.getDt()
 			self.ballModel.setScale(sx + (SCALE_RATE * dt), sy + (SCALE_RATE * dt), sz + (SCALE_RATE * dt))
 			self.ballModel.setPos(px, py + (TRANS_RATE * dt), pz + (TRANS_RATE * dt))
+
+			
+			
+			
+	def getSize(self):
+		return self.ballModel.getScale().getX()
+	
+	def throwBall(self, size, camP, camH):
+		self.ballNP.removeNode()
+		pos = self.playerObj.getPosition()
+		pNP = self.playerObj.getNodePath()
+		px = plypos.getX()
+		py = plypos.getY()
+		pz = plypos.getZ()
+		size = self.ballModel.getScale().getX()
+		self.ballShape = BulletCylinderShape(size, size * 1.7, ZUp)
+		self.ballRBody = BulletRigidBodyNode()
+		self.ballRBody.setMass(1)
+		self.ballRBody.addShape(self.ballShape)
+		rbNP = self.worldObj.attachNewNode(self.ballRBody)
+		ph = self.playerObj.getRotation()
+		self.ballModel.setPos(0, 0, 0)
+		dx = -sin(ph * DEG_TO_RAD) * size * 3
+		dy = cos(ph * DEG_TO_RAD) * size * 3
+		self.ballModel.reparentTo(rbNP)
+		rbNP.setPos(px + dx, py + dy, pz)
+		self.worldBullet.attachRigidBody(self.ballRBody)
+		self.setRolling(False)
+		self.rolledOnce = True
+		self.ballExists = True
+		xFactor = -sin(camH * DEG_TO_RAD)*cos(camP * DEG_TO_RAD)
+		yFactor = cos(camH * DEG_TO_RAD)*cos(camP * DEG_TO_RAD)
+		zFactor = sin(camP *DEG_TO_RAD)
+		defUpFrc = 200
+		defXYFrc = 500
+		self.applyForce(Vec3(defXYFrc*xFactor, defXYFrc*yFactor,defUpFrc*zFactor))
+		
+	
+	def setFactor(self, x, y, z):
+		self.ballNP.node().setLinearFactor(Vec3(x, y, z))
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Applies a force vector.
+	# (Vec3 force)
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def applyForce(self, force):
+		self.ballNP.node().applyForce(force, PNT)
