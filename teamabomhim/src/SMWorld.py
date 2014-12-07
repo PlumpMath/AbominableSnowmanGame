@@ -99,6 +99,7 @@ class SMWorld(DirectObject):
 		# Player Init
 		self.playerObj = SMPlayer(self.worldBullet, self.worldObj, self, self.playerStart, self.audioMgr)
 		self.playerNP = self.playerObj.getNodePath()
+		self.playerNP.setH(180);
 		self.canUseShift = True
 		self.canAirDash = True
 		
@@ -129,13 +130,13 @@ class SMWorld(DirectObject):
 		self.GUI.addElement("snowMeter", self.snowMeter)
 		
 		#Snowy Outside
-		base.enableParticles()
-		self.p = ParticleEffect()
-		self.p.cleanup()
-		self.p = ParticleEffect()
-		self.p.loadConfig('snow.ptf')        
-		self.p.start(self.camObj.getNodePath())
-		self.p.setPos(0.00, 0.500, 0.000)
+		# base.enableParticles()
+		# self.p = ParticleEffect()
+		# self.p.cleanup()
+		# self.p = ParticleEffect()
+		# self.p.loadConfig('snow.ptf')        
+		# self.p.start(self.camObj.getNodePath())
+		# self.p.setPos(0.00, 0.500, 0.000)
 
 		# AI
 		# self.goat1 = SMAI("../res/models/goat.egg", 75.0, self.worldBullet, self.worldObj, -70, -95, 5)
@@ -189,6 +190,33 @@ class SMWorld(DirectObject):
 		skybox.setScale(200)
 		skybox.setPos(0, 0, -450)
 		skybox.reparentTo(render)
+		
+		
+		#ADDED THIS STUFF BECAUSE OBJECTMAP IS TOO INACCURATE TOO PLACE ITEMS PROPERLY
+		caveNew = loader.loadModel("../res/models/cave_new.egg")
+		caveNew.reparentTo(render)
+		caveNew.setScale(11)
+		caveNew.setPos(-50, 95, -13)
+		caveNew.setH(0)
+		
+		planeTail = loader.loadModel("../res/models/plane_tail.egg")
+		planeTail.reparentTo(render)
+		planeTail.setScale(10)
+		planeTail.setPos(-10,-150,-10)
+		planeTail.setH(230)
+		
+		planeFront = loader.loadModel("../res/models/plane_front")
+		planeFront.reparentTo(render)
+		planeFront.setScale(8)
+		planeFront.setPos(190,-100,-15)
+		planeFront.setH(190)
+		planeFront.setR(30)
+		
+		ropeBridge = loader.loadModel("../res/models/rope_bridge.egg")
+		ropeBridge.reparentTo(render)
+		ropeBridge.setPos(180,115,30)
+		ropeBridge.setScale(6)
+		ropeBridge.setH(50)
 		
 		print("World initialized.")
 
@@ -322,7 +350,7 @@ class SMWorld(DirectObject):
 		rockModel = loader.loadModel("../res/models/rock_1.egg")
 		rock2Model = loader.loadModel("../res/models/rock_2.egg")
 		rock3Model = loader.loadModel("../res/models/rock_3.egg")
-		caveModel = loader.loadModel("../res/models/cave_tunnel.egg")
+		caveModel = loader.loadModel("../res/models/cave_new.egg")
 		planeFrontModel = loader.loadModel("../res/models/plane_front.egg")
 		planeWingModel = loader.loadModel("../res/models/plane_wing.egg")
 		texpk = loader.loadTexture(scmPath).peek()
@@ -345,7 +373,8 @@ class SMWorld(DirectObject):
 					newTree = self.treeNP.attachNewNode("treeNode")
 					treeModel.instanceTo(newTree)
 					newTree.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
-					newTree.setScale(randint(0,4))
+					# newTree.setScale(randint(0,4))
+					newTree.setScale(2)
 					
 				if(int(color.getX() * 255.0) == 128):
 					newRock = self.rockNP.attachNewNode("newRock")
