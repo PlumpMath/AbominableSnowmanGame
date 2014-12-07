@@ -62,13 +62,20 @@ class SMAI():
 		self.target = target
 			
 	def flee(self):
+		h = 1
+		hx = 1
+		hy = 1
 		if(self.AIChar.getDistance(self.target) < 40.0):
 			if(self.AINode.getLinearVelocity() > self.maxSpeed):
-				self.AIChar.setH(self.target.getH())
-				h = self.AIChar.getH()
-				hx = sin(h * DEG_TO_RAD) * 10
-				hy = cos(h * DEG_TO_RAD) * 10
-				self.AINode.applyForce(Vec3(-hx * self.AISpeed * globalClock.getDt(), hy * self.AISpeed * globalClock.getDt(), 0), PNT)
+				if(self.AINode.getLinearVelocity() < 100):
+					self.AIChar.setH(self.target.getH())
+					h = self.AIChar.getH()
+				else:
+					hx = sin(h * DEG_TO_RAD) * 10
+					hy = cos(h * DEG_TO_RAD) * 10
+					self.AINode.applyForce(Vec3(-hx * self.AISpeed * globalClock.getDt(), hy * self.AISpeed * globalClock.getDt(), 0), PNT)
+				# else:
+					# self.AINode.applyForce(Vec3(-hx * self.AISpeed * globalClock.getDt(), hy * self.AISpeed * globalClock.getDt(), 0), PNT)
 
 	def seek(self):
 		if(self.AIChar.getDistance(self.target) > 20.0):

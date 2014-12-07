@@ -2,6 +2,7 @@ import direct.directbase.DirectStart
 from panda3d.core import TextNode, NodePath
 from direct.showbase.DirectObject import DirectObject
 from direct.gui.OnscreenText import OnscreenText
+from panda3d.core import TransparencyAttrib
 from direct.gui.DirectGui import *
 
 from SMWorld import SMWorld
@@ -17,10 +18,12 @@ class Game(DirectObject):
 		
 		self.audioMgr = SMAudioManager()
 
-		self.title = OnscreenText(text = "The Abominable Snowman of the Himalayas",
-									   pos = (0.0, 0.5), scale = 0.1,fg=(1,0.5,0.5,1),
-									   align=TextNode.ACenter,mayChange=1)
-
+		#Print out Logo
+		self.title = OnscreenImage(image = "../res/icons/logo.png", pos = (0.0, -70.0, 0.45), scale = (1.1, 0.9, 0.5))
+									   
+		#Allow Transparencies of PNG
+		self.title.setTransparency(TransparencyAttrib.MAlpha)
+									   
 		self.continueBtn = DirectButton(text = "New Game", scale = 0.1,
 										command = self.newGame)
 
