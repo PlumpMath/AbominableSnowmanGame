@@ -6,6 +6,7 @@ import java.io.Serializable;
 
 import javax.swing.JPanel;
 
+import backend.Color;
 import backend.ImageIDTuple;
 
 /**
@@ -35,11 +36,12 @@ public class EditorTab extends JPanel implements Serializable {
      * @param width
      * @param height
      */
-    public EditorTab(int width, int height, String displayName) {
+    public EditorTab(int width, int height, String displayName,
+                     EditorCanvas.MapType mt, Color mc) {
         ID = displayName.hashCode();
         setLayout(new BorderLayout());
         setDisplayName(displayName);
-        editorCanvas = new EditorCanvas(width, height, ID);
+        editorCanvas = new EditorCanvas(width, height, ID, mt, mc);
         add(editorCanvas, BorderLayout.CENTER);
     }
 

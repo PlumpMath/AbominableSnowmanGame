@@ -2,10 +2,10 @@ package display;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -13,10 +13,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Stack;
 
 import javax.swing.JPanel;
 
+import backend.ImageColorTuple;
 import backend.ImageIDTuple;
 
 /**
@@ -31,6 +33,13 @@ public class EditorCanvas extends JPanel implements Serializable {
      */
     private static final long serialVersionUID = -2593841092399324456L;
     
+    public static enum MapType { HEIGHT, TEXTURE, SCENERY };
+    
+    private static ArrayList<EditorCanvas> editors = new ArrayList<EditorCanvas>();
+    
+    /**
+     * 
+     */
     private Integer ID;
     
     /**
@@ -46,7 +55,7 @@ public class EditorCanvas extends JPanel implements Serializable {
     /**
      * TODO: Comment me.
      */
-    private transient ImageIDTuple map;
+    public transient ImageIDTuple map;
     
     /**
      * TODO: Comment me.
@@ -61,17 +70,31 @@ public class EditorCanvas extends JPanel implements Serializable {
     /**
      * TODO: Comment me.
      */
-    public EditorCanvas(int width, int height, int ID) {
+    private MapType mt;
+    
+    /**
+     * TODO: Comment me.
+     */
+    private backend.Color mc;
+    
+    /**
+     * TODO: Comment me.
+     */
+    public EditorCanvas(int width, int height, int ID, MapType mt,
+                        backend.Color mc) {
         // TODO: Comment me.
         this.ID = ID;
+        this.mt = mt;
+        this.mc = mc;
         undoBuffer = new Stack<ImageIDTuple>();
         redoBuffer = new Stack<ImageIDTuple>();
         map = new ImageIDTuple(new BufferedImage(width, height,
-                              BufferedImage.TYPE_INT_RGB), ID);
+                               BufferedImage.TYPE_INT_RGB), ID);
         setOpaque(false);
         stroke = new Path2D.Float();
         setDrawing(false);
         addListeners();
+        editors.add(this);
     }
     
     private void addListeners() {
@@ -202,8 +225,20 @@ public class EditorCanvas extends JPanel implements Serializable {
         float ty = ((float) map.image.getHeight()) / ((float) this.getHeight());
         drawStroke(map.image.createGraphics(), tx, ty);
         stroke.reset();
+        switch(mt) {
+            case HEIGHT: Map3D.current.updateHeightmap(map.image); break;
+            case TEXTURE: ArrayList<ImageColorTuple> ts
+                                = new ArrayList<ImageColorTuple>();
+                          for(EditorCanvas e : editors)
+                              if(e.mt == MapType.TEXTURE)
+                                  ts.add(new ImageColorTuple(e.map.image,
+                                                             e.mc));
+                          Map3D.current.updateTexMap(ts);
+                          break;
+            case SCENERY: break;
+        }
     }
-    
+
     /**
      * TODO: Comment me.
      * 

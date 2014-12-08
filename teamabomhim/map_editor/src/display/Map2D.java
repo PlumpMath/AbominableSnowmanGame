@@ -18,6 +18,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import net.miginfocom.swing.MigLayout;
+import backend.Color;
 import backend.ImageIDTuple;
 
 /**
@@ -34,6 +35,8 @@ public class Map2D extends JPanel {
      * the unique ID for the Map2D class.
      */
     private static final long serialVersionUID = -6095943892036919371L;
+    
+    public static int mapSize;
     
     private HashMap<Integer, EditorTab> id2Tab;
 
@@ -64,10 +67,19 @@ public class Map2D extends JPanel {
         add(tabbedPane, "cell 0 0,grow");
         
         // FIXME: generate tabs from XML file.
-        EditorTab[] tabs = {new EditorTab(512, 512, "Heightmap"),
-                            new EditorTab(512, 512, "Icemap"),
-                            new EditorTab(512, 512, "Snowmap"),
-                            new EditorTab(512, 512, "Scenerymap")};
+        mapSize = 512;
+        EditorTab[] tabs = {new EditorTab(mapSize, mapSize, "Heightmap",
+                                          EditorCanvas.MapType.HEIGHT,
+                                          new Color(0.0f, 0.0f, 0.0f)),
+                            new EditorTab(mapSize, mapSize, "Icemap",
+                                          EditorCanvas.MapType.TEXTURE,
+                                          new Color(0.5f, 0.5f, 1.0f)),
+                            new EditorTab(mapSize, mapSize, "Snowmap",
+                                          EditorCanvas.MapType.TEXTURE,
+                                          new Color(1.0f, 1.0f, 1.0f)),
+                            new EditorTab(mapSize, mapSize, "Scenerymap",
+                                          EditorCanvas.MapType.SCENERY,
+                                          new Color(0, 0, 0))};
         id2Tab.put(tabs[0].getID(), tabs[0]);
         id2Tab.put(tabs[1].getID(), tabs[1]);
         id2Tab.put(tabs[2].getID(), tabs[2]);
