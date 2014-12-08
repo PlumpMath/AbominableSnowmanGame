@@ -143,7 +143,7 @@ class SMCamera():
 		
 		cx = cos(self.angle * DEG_TO_RAD)
 		cy = sin(self.angle * DEG_TO_RAD)
-		cz = ((1000 / ((self.distance + 10) / 2))) - 20
+		cz = self.distance / 10
 		
 		self.camNP.setPos(self.distance * (-cx), self.distance * (-cy), cz)
 		self.lookAtPlayer()

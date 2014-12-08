@@ -652,10 +652,12 @@ class SMWorld(DirectObject):
 		self.snowMeter.updateSnow(self.playerObj)
 		
 		#Load a new map when all collectables are collected
-		if(self.snowCount == self.snowflakeCount):
+		if(self.snowCount >= self.snowflakeCount):
 			
 			self.snowCount = 0
 			self.snowflakeCount = 0
+			self.snowflakeCounter.setValue(0)
+			self.snowflakeCounter.setState(2)
 			
 			#Loading Screen
 			loadingText=OnscreenText("Loading...",1,fg=(1,1,1,1),pos=(0,0),align=TextNode.ACenter,scale=.07,mayChange=1)
@@ -705,7 +707,7 @@ class SMWorld(DirectObject):
 			# ONE INTEGER
 			deathHeight = int(metaLines[1])
 		
-			#Get dem snowflakes
+			
 			self.snowflakePositions = []
 			print("Snowflake Count: " + str(self.snowflakeCount))
 			for i in xrange(0, self.snowflakeCount):
@@ -716,6 +718,7 @@ class SMWorld(DirectObject):
 				sfz = int(sfList[2])
 				self.snowflakePositions.append(Point3(sfx, sfy, sfz))
 				print("New snowflake to add: (" + str(sfx) + "," + str(sfy) + "," + str(sfz) + ")")
+			self.snowflakeCounter.setMaxValue(self.snowflakeCount)
 			
 			#load new map
 			self.mapName = str(self.mapID)
