@@ -1,4 +1,4 @@
-from panda3d.core import BitMask32, Point2, Point3, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage, VBase4, NodePath
+from panda3d.core import BitMask32, Point2, Point3, Vec3, Vec4, PNMImage, Filename, GeoMipTerrain, TextureStage, VBase4, NodePath, TextNode
 from panda3d.core import WindowProperties
 from panda3d.physics import BaseParticleEmitter,BaseParticleRenderer
 from panda3d.physics import PointParticleFactory,SpriteParticleRenderer
@@ -193,30 +193,30 @@ class SMWorld(DirectObject):
 		
 		
 		#ADDED THIS STUFF BECAUSE OBJECTMAP IS TOO INACCURATE TOO PLACE ITEMS PROPERLY
-		caveNew = loader.loadModel("../res/models/cave_new.egg")
-		caveNew.reparentTo(render)
-		caveNew.setScale(11)
-		caveNew.setPos(-50, 95, -13)
-		caveNew.setH(0)
+		self.caveNew = loader.loadModel("../res/models/cave_new.egg")
+		self.caveNew.reparentTo(render)
+		self.caveNew.setScale(11)
+		self.caveNew.setPos(-50, 95, -13)
+		self.caveNew.setH(0)
 		
-		planeTail = loader.loadModel("../res/models/plane_tail.egg")
-		planeTail.reparentTo(render)
-		planeTail.setScale(10)
-		planeTail.setPos(-10,-150,-10)
-		planeTail.setH(230)
+		self.planeTail = loader.loadModel("../res/models/plane_tail.egg")
+		self.planeTail.reparentTo(render)
+		self.planeTail.setScale(10)
+		self.planeTail.setPos(-10,-150,-10)
+		self.planeTail.setH(230)
 		
-		planeFront = loader.loadModel("../res/models/plane_front")
-		planeFront.reparentTo(render)
-		planeFront.setScale(8)
-		planeFront.setPos(190,-100,-15)
-		planeFront.setH(190)
-		planeFront.setR(30)
+		self.planeFront = loader.loadModel("../res/models/plane_front")
+		self.planeFront.reparentTo(render)
+		self.planeFront.setScale(8)
+		self.planeFront.setPos(190,-100,-15)
+		self.planeFront.setH(190)
+		self.planeFront.setR(30)
 		
-		ropeBridge = loader.loadModel("../res/models/rope_bridge.egg")
-		ropeBridge.reparentTo(render)
-		ropeBridge.setPos(180,115,30)
-		ropeBridge.setScale(6)
-		ropeBridge.setH(50)
+		self.ropeBridge = loader.loadModel("../res/models/rope_bridge.egg")
+		self.ropeBridge.reparentTo(render)
+		self.ropeBridge.setPos(180,115,30)
+		self.ropeBridge.setScale(6)
+		self.ropeBridge.setH(50)
 		
 		print("World initialized.")
 
@@ -651,17 +651,21 @@ class SMWorld(DirectObject):
 			
 		self.snowMeter.updateSnow(self.playerObj)
 		
-		if(self.snowflakeCount == 3):
+		#Load a new map when all collectables are collected
+		if(self.snowCount == self.snowflakeCount):
+			
+			self.snowCount = 0
+			self.snowflakeCount = 0
+			
 			#Loading Screen
 			loadingText=OnscreenText("Loading...",1,fg=(1,1,1,1),pos=(0,0),align=TextNode.ACenter,scale=.07,mayChange=1)
 			base.graphicsEngine.renderFrame() 
 			base.graphicsEngine.renderFrame() 
 			base.graphicsEngine.renderFrame() 
-			base.graphicsEngine.renderFrame() 
+			base.graphicsEngine.renderFrame()
 			
 			#destroy objects
 			self.worldBullet.removeRigidBody(self.heightMap)
-			self.hmTerrainNP.setPos(0,0,-200)
 			self.hmTerrainNP.removeNode()
 			self.objNP.removeNode()
 			self.treeNP.removeNode()
@@ -672,14 +676,55 @@ class SMWorld(DirectObject):
 			self.planeFrontNP.removeNode()
 			self.planeWingNP.removeNode()
 			self.hmNP.removeNode()
+			self.ropeBridge.removeNode()
+			self.planeFront.removeNode()
+			self.planeTail.removeNode()
+			self.caveNew.removeNode()
 			
-			#reset Snowflake Counter
-			self.snowCount = 0
+			self.mapID += 1
+			print self.mapID
+			# EX: maps/map-1/map-1.yetimap
+			metaFile = open("../maps/map" + str(self.mapID) + "/map" + str(self.mapID) + ".yetimap", 'r')
+			metaLines = metaFile.readlines()
+			lineCount = len(metaLines)
+			self.snowflakeCount = lineCount - 2
+		
+			# First Line: Player's starting position
+			# EX: 50,50,50 (NO SPACES)
+			playerLine = metaLines[0]
+			playerPosList = playerLine.split(",")
+			playerInitX = int(playerPosList[0])
+			playerInitY = int(playerPosList[1])
+			playerInitZ = int(playerPosList[2])
+			self.playerObj.playerNP.setPos(playerInitX, playerInitY, playerInitZ)
+			self.playerObj.startX = playerInitX
+			self.playerObj.startY = playerInitY
+			self.playerObj.startZ = playerInitZ
+		
+			# 2nd Line: Deathzone Height
+			# ONE INTEGER
+			deathHeight = int(metaLines[1])
+		
+			#Get dem snowflakes
+			self.snowflakePositions = []
+			print("Snowflake Count: " + str(self.snowflakeCount))
+			for i in xrange(0, self.snowflakeCount):
+				sfline = metaLines[i+2]
+				sfList = sfline.split(",")
+				sfx = int(sfList[0])
+				sfy = int(sfList[1])
+				sfz = int(sfList[2])
+				self.snowflakePositions.append(Point3(sfx, sfy, sfz))
+				print("New snowflake to add: (" + str(sfx) + "," + str(sfy) + "," + str(sfz) + ")")
 			
 			#load new map
-			self.heightMap = self.setupHeightmap("map01")
+			self.mapName = str(self.mapID)
+			self.heightMap = self.setupHeightmap(self.mapName)
+			self.deathZone = self.setupDeathzone(deathHeight)
+				
 			
 			loadingText.cleanup() 
+			
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the debug text.
