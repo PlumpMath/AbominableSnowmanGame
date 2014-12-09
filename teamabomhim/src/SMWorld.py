@@ -678,9 +678,11 @@ class SMWorld(DirectObject):
 			self.planeFrontNP.removeNode()
 			self.planeWingNP.removeNode()
 			self.hmNP.removeNode()
-			self.ropeBridge.AINode.removeNode()
+			self.ropeBridge.AIChar.setPos(-200,-300,-200)
+			self.ropeBridge.AIChar.removeNode()
 			self.planeFront.removeNode()
-			self.planeTail.AINode.removeNode()
+			self.planeTail.AIChar.setPos(-200,-200,-200)
+			self.planeTail.AIChar.removeNode()
 			self.caveNew.removeNode()
 			
 			self.mapID += 1
