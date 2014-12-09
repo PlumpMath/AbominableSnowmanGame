@@ -5,19 +5,21 @@ from math import sin, cos, pi, floor
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletCylinderShape
 from panda3d.bullet import ZUp
+from time import sleep
 
 DEG_TO_RAD = pi/180
 MOVE_SPEED = 30.0 * 100000
 INIT_SCALE = 1.5
-MAX_SCALE = 9
+MAX_SCALE = 12
 SCALE_RATE = 1.5
 TRANS_RATE = 1.2
 DEG_TO_RAD = pi/180
 
 class SMBall():
 
-	def __init__(self, bWrld, wObj, pObj):
+	def __init__(self, bWrld, wObj, pObj, playerNP):
 		self.playerObj = pObj
+		self.player = playerNP
 		self.worldBullet = bWrld
 		self.worldObj = wObj
 		self.rolledOnce = False
@@ -71,6 +73,8 @@ class SMBall():
 			if(self.rolledOnce):
 				self.ballRBody.removeShape(self.ballShape)
 				self.ballModel.detachNode()
+				sleep(0.2)
+					
 			pos = self.playerObj.getPosition()
 			x = pos.getX()
 			y = pos.getY()
@@ -104,6 +108,7 @@ class SMBall():
 		self.setRolling(False)
 		self.rolledOnce = True
 		self.ballExists = True
+		print(self.rolledOnce)
 	
 	def grow(self):
 		size = self.ballModel.getScale()

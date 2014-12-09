@@ -24,13 +24,14 @@ from SMCollisionHandler import SMCollisionHandler
 from SMLighting import SMLighting
 from SMCollect import SMCollect
 from SMBall import SMBall
-# from SMAI import SMAI
+from SMAI import SMAI
 from SMGUI import SMGUI
 from SMGUICounter import SMGUICounter
 from SMGUIMeter import SMGUIMeter
+from SMColide import SMColide
 
 # Global gravity constant (9.81 is for scrubs)
-GRAVITY = 96
+GRAVITY = 226
 TERRAIN_SNOW = 0
 TERRAIN_ICE = 1
 TERRAIN_STONE = 2
@@ -104,7 +105,7 @@ class SMWorld(DirectObject):
 		self.canAirDash = True
 		
 		# Snowball Init
-		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerObj)
+		self.ballObj = SMBall(self.worldBullet, self.worldObj, self.playerObj, self.playerNP)
 		self.sbCollideFlag = False
 		self.ballNP = self.ballObj.getNodePath()
 		
@@ -199,12 +200,6 @@ class SMWorld(DirectObject):
 		self.caveNew.setPos(-50, 95, -13)
 		self.caveNew.setH(0)
 		
-		self.planeTail = loader.loadModel("../res/models/plane_tail.egg")
-		self.planeTail.reparentTo(render)
-		self.planeTail.setScale(10)
-		self.planeTail.setPos(-10,-150,-10)
-		self.planeTail.setH(230)
-		
 		self.planeFront = loader.loadModel("../res/models/plane_front")
 		self.planeFront.reparentTo(render)
 		self.planeFront.setScale(8)
@@ -212,11 +207,16 @@ class SMWorld(DirectObject):
 		self.planeFront.setH(190)
 		self.planeFront.setR(30)
 		
-		self.ropeBridge = loader.loadModel("../res/models/rope_bridge.egg")
-		self.ropeBridge.reparentTo(render)
-		self.ropeBridge.setPos(180,115,30)
-		self.ropeBridge.setScale(6)
-		self.ropeBridge.setH(50)
+		mountain = loader.loadModel("../res/models/mountain.egg")
+		mountain.reparentTo(render)
+		mountain.setPos(650,800,20)
+		mountain.setScale(120)
+
+		self.planeTail = SMColide("../res/models/plane_tail.egg", self.worldBullet, self.worldObj, -40, -130, -7, 20, 20, 15, 10)
+		self.planeTail.AIModel.setH(230)		
+		
+		self.ropeBridge = SMColide("../res/models/rope_bridge.egg", self.worldBullet, self.worldObj, 180, 115, 30, 45, 45, 3, 6)
+		self.ropeBridge.AIModel.setH(50)
 		
 		print("World initialized.")
 
@@ -678,9 +678,9 @@ class SMWorld(DirectObject):
 			self.planeFrontNP.removeNode()
 			self.planeWingNP.removeNode()
 			self.hmNP.removeNode()
-			self.ropeBridge.removeNode()
+			self.ropeBridge.AINode.removeNode()
 			self.planeFront.removeNode()
-			self.planeTail.removeNode()
+			self.planeTail.AINode.removeNode()
 			self.caveNew.removeNode()
 			
 			self.mapID += 1
