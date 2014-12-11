@@ -507,7 +507,7 @@ class SMWorld(DirectObject):
 	
 		# Go through the collision and flag tests, and update them
 		self.doPlayerTests()
-
+		
 		# Rotation and camera movement
 		if self.kh.poll(self.keymap['Left']):
 			self.playerObj.turn(True)
@@ -531,13 +531,13 @@ class SMWorld(DirectObject):
 			self.playerObj.stop()
 
 		# Jump
-		if(self.kh.poll(self.keymap['Space']) and self.terrSteepness < 0.25 and not(self.ballObj.isRolling())):
+		if(self.kh.poll(self.keymap['Space']) and self.terrSteepness < 0.25): #and not(self.ballObj.isRolling())):
 			self.playerObj.jump()
 		else:
 			self.playerObj.resetJump()
 		
 		# Air Dash
-		if(self.kh.poll(self.keymap['airDash']) and self.playerObj.getAirborneFlag() == True and self.canAirDash == True):
+		if(self.kh.poll(self.keymap['airDash'])): #and self.playerObj.getAirborneFlag() == True and self.canAirDash == True):
 			self.canAirDash = False
 			self.playerObj.airDash()
 		
@@ -604,7 +604,7 @@ class SMWorld(DirectObject):
 		ry = self.downRayTest.getY()
 		rz = self.downRayTest.getZ()
 		self.terrSteepness = 1.0 - rz
-		
+
 		# Redo collision flags later
 		tempFlag = False
 		

@@ -11,11 +11,11 @@ from math import sin, cos, pi, sqrt
 MASS = 200.0
 TURN_SPEED = 180
 DEG_TO_RAD = pi/180
-MAX_VEL_XY = 50
+MAX_VEL_XY = 70
 MAX_VEL_Z = 5000
-MOVE_SPEED = 70.0 * 100000
-JUMP_FORCE = 9.0 * 100000
-STOP_DAMPING = 5
+MOVE_SPEED = 50.0 * 100000
+JUMP_FORCE = 7.0 * 100000
+STOP_DAMPING = 10
 JMP_STOP_DAMPING = 0.88
 TURN_DAMPING = 0.92
 SLIP_THRESHOLD = 0.30
@@ -24,12 +24,12 @@ PNT = Point3(0,0,0)
 
 # Snow-based Actions
 MAX_SNOW = 100.0
-COST_DOUBLE_JUMP = 8.0
-COST_AIR_DASH = 16.0
+COST_DOUBLE_JUMP = 5.0
+COST_AIR_DASH = 10.0
 
 # Smooth this out later
-SNOW_HEIGHT = -1.5
-SOLID_HEIGHT = -1.0
+SNOW_HEIGHT = -4.5
+SOLID_HEIGHT = -3.0
 
 # Terrain enumeration
 TERRAIN_SNOW = 0
@@ -94,7 +94,7 @@ class SMPlayer():
 		yetiHeight = 7
 		yetiRadius = 2
 		yetiShape = BulletCapsuleShape(yetiRadius, yetiHeight - 2 * yetiRadius, ZUp)
-		self.yetiModel = loader.loadModel("../res/models/yeti.egg")
+		self.yetiModel = loader.loadModel("../res/models/yeti_idle.egg")
 		self.yetiModel.setH(90)
 		self.yetiModel.setPos(0, 0, SNOW_HEIGHT) # This is NOT the actual player position. Use playerNP instead.
 		
@@ -113,6 +113,7 @@ class SMPlayer():
 		playerNP.setPos(x, y, z)
 		#playerNP.setP(90)
 		playerNP.setH(270)
+		# self.setAnimation( "../res/models/yeti_idle", playerNP);
 		self.yetiModel.reparentTo(playerNP)
 		self.bulletWorld.attachRigidBody(playerNP.node())
 		return playerNP
@@ -438,4 +439,8 @@ class SMPlayer():
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def setAnimation(self, id):
-		print("[!] Not yet implemented!")
+		print("Implemented!")
+		self.yetiModel = loader.loadModel(id)
+		# self.yetiModel.setH(90)
+		# self.yetiModel.setPos(0, 0, SNOW_HEIGHT) # This is NOT the actual player position. Use playerNP instead.
+		# self.yetiModel.reparentTo(playerNP)

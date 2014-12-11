@@ -16,7 +16,7 @@ class SMCollect():
 		self.world = world
 		self.worldNP = worldNP
 		self.collected = False
-		self.collectShape = BulletBoxShape(Vec3(3, 3, 3))
+		self.collectShape = BulletBoxShape(Vec3(3, 5, 5))
 		self.collectGN = BulletGhostNode('Box')
 		self.collectGN.addShape(self.collectShape)
 		self.collectNP = self.create(sPos, self.collectGN)
