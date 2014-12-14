@@ -11,7 +11,11 @@ from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderSha
 from panda3d.bullet import ZUp
 from random import randint
 
+import os
+from time import time, sleep
+
 from direct.gui.OnscreenText import OnscreenText
+from direct.gui.OnscreenImage import OnscreenImage
 
 from direct.showbase.DirectObject import DirectObject
 from direct.showbase.Transitions import Transitions
@@ -651,85 +655,92 @@ class SMWorld(DirectObject):
 			
 		self.snowMeter.updateSnow(self.playerObj)
 		
-		#Load a new map when all collectables are collected
+		#Check if there is a "next" level. If there is, load it. Otherwise display end game screen.
 		if(self.snowCount >= self.snowflakeCount):
+			file_path="../maps/map" + str(self.mapID+1) + "/map" + str(self.mapID+1) + ".yetimap"
+			if  os.path.lexists(file_path):
 			
-			self.snowCount = 0
-			self.snowflakeCount = 0
-			self.snowflakeCounter.setValue(0)
-			self.snowflakeCounter.setState(2)
-			
-			#Loading Screen
-			loadingText=OnscreenText("Loading...",1,fg=(1,1,1,1),pos=(0,0),align=TextNode.ACenter,scale=.07,mayChange=1)
-			base.graphicsEngine.renderFrame() 
-			base.graphicsEngine.renderFrame() 
-			base.graphicsEngine.renderFrame() 
-			base.graphicsEngine.renderFrame()
-			
-			#destroy objects
-			self.worldBullet.removeRigidBody(self.heightMap)
-			self.hmTerrainNP.removeNode()
-			self.objNP.removeNode()
-			self.treeNP.removeNode()
-			self.rockNP.removeNode()
-			self.rock2NP.removeNode()
-			self.rock3NP.removeNode()
-			self.caveNP.removeNode()
-			self.planeFrontNP.removeNode()
-			self.planeWingNP.removeNode()
-			self.hmNP.removeNode()
-			self.ropeBridge.AIChar.setPos(-200,-300,-200)
-			self.ropeBridge.AIChar.removeNode()
-			self.planeFront.removeNode()
-			self.planeTail.AIChar.setPos(-200,-200,-200)
-			self.planeTail.AIChar.removeNode()
-			self.caveNew.removeNode()
-			
-			self.mapID += 1
-			print self.mapID
-			# EX: maps/map-1/map-1.yetimap
-			metaFile = open("../maps/map" + str(self.mapID) + "/map" + str(self.mapID) + ".yetimap", 'r')
-			metaLines = metaFile.readlines()
-			lineCount = len(metaLines)
-			self.snowflakeCount = lineCount - 2
-		
-			# First Line: Player's starting position
-			# EX: 50,50,50 (NO SPACES)
-			playerLine = metaLines[0]
-			playerPosList = playerLine.split(",")
-			playerInitX = int(playerPosList[0])
-			playerInitY = int(playerPosList[1])
-			playerInitZ = int(playerPosList[2])
-			self.playerObj.playerNP.setPos(playerInitX, playerInitY, playerInitZ)
-			self.playerObj.startX = playerInitX
-			self.playerObj.startY = playerInitY
-			self.playerObj.startZ = playerInitZ
-		
-			# 2nd Line: Deathzone Height
-			# ONE INTEGER
-			deathHeight = int(metaLines[1])
-		
-			
-			self.snowflakePositions = []
-			print("Snowflake Count: " + str(self.snowflakeCount))
-			for i in xrange(0, self.snowflakeCount):
-				sfline = metaLines[i+2]
-				sfList = sfline.split(",")
-				sfx = int(sfList[0])
-				sfy = int(sfList[1])
-				sfz = int(sfList[2])
-				self.snowflakePositions.append(Point3(sfx, sfy, sfz))
-				print("New snowflake to add: (" + str(sfx) + "," + str(sfy) + "," + str(sfz) + ")")
-			self.snowflakeCounter.setMaxValue(self.snowflakeCount)
-			
-			#load new map
-			self.mapName = str(self.mapID)
-			self.heightMap = self.setupHeightmap(self.mapName)
-			self.deathZone = self.setupDeathzone(deathHeight)
+				self.snowCount = 0
+				self.snowflakeCount = 0
+				self.snowflakeCounter.setValue(0)
+				self.snowflakeCounter.setState(2)
 				
+				#Loading Screen
+				self.transition.fadeScreen(0.7)	
+				self.loadingText=OnscreenText("Loading...",1,fg=(1,1,1,0),pos=(0,0),align=TextNode.ACenter,scale=.07,mayChange=1)
+				base.graphicsEngine.renderFrame() 
+				base.graphicsEngine.renderFrame() 
+				base.graphicsEngine.renderFrame() 
+				base.graphicsEngine.renderFrame()
+				self.transition.noFade()
+				
+				#destroy objects
+				self.worldBullet.removeRigidBody(self.heightMap)
+				self.hmTerrainNP.removeNode()
+				self.objNP.removeNode()
+				self.treeNP.removeNode()
+				self.rockNP.removeNode()
+				self.rock2NP.removeNode()
+				self.rock3NP.removeNode()
+				self.caveNP.removeNode()
+				self.planeFrontNP.removeNode()
+				self.planeWingNP.removeNode()
+				self.hmNP.removeNode()
+				self.ropeBridge.AIChar.setPos(-200,-300,-200)
+				self.ropeBridge.AIChar.removeNode()
+				self.planeFront.removeNode()
+				self.planeTail.AIChar.setPos(-200,-200,-200)
+				self.planeTail.AIChar.removeNode()
+				self.caveNew.removeNode()
+				
+				self.mapID += 1
+				print self.mapID
+				# EX: maps/map-1/map-1.yetimap
+				metaFile = open("../maps/map" + str(self.mapID) + "/map" + str(self.mapID) + ".yetimap", 'r')
+				metaLines = metaFile.readlines()
+				lineCount = len(metaLines)
+				self.snowflakeCount = lineCount - 2
 			
-			loadingText.cleanup() 
+				# First Line: Player's starting position
+				# EX: 50,50,50 (NO SPACES)
+				playerLine = metaLines[0]
+				playerPosList = playerLine.split(",")
+				playerInitX = int(playerPosList[0])
+				playerInitY = int(playerPosList[1])
+				playerInitZ = int(playerPosList[2])
+				self.playerObj.playerNP.setPos(playerInitX, playerInitY, playerInitZ)
+				self.playerObj.startX = playerInitX
+				self.playerObj.startY = playerInitY
+				self.playerObj.startZ = playerInitZ
 			
+				# 2nd Line: Deathzone Height
+				# ONE INTEGER
+				deathHeight = int(metaLines[1])
+			
+				
+				self.snowflakePositions = []
+				print("Snowflake Count: " + str(self.snowflakeCount))
+				for i in xrange(0, self.snowflakeCount):
+					sfline = metaLines[i+2]
+					sfList = sfline.split(",")
+					sfx = int(sfList[0])
+					sfy = int(sfList[1])
+					sfz = int(sfList[2])
+					self.snowflakePositions.append(Point3(sfx, sfy, sfz))
+					print("New snowflake to add: (" + str(sfx) + "," + str(sfy) + "," + str(sfz) + ")")
+				self.snowflakeCounter.setMaxValue(self.snowflakeCount)
+				
+				#load new map
+				self.mapName = str(self.mapID)
+				self.heightMap = self.setupHeightmap(self.mapName)
+				self.deathZone = self.setupDeathzone(deathHeight)
+					
+				
+				self.loadingText.cleanup() 
+			else:
+				taskMgr.remove('UpdateTask')
+				self.endImage=OnscreenImage(image = "../res/icons/endgame1.png", pos = (0.0, 0.0, 0.0), scale = (1.35, 2, 1))
+				
 		
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Update the debug text.
