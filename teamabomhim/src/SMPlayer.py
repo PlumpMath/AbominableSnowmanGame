@@ -9,11 +9,11 @@ from math import sin, cos, pi, sqrt
 
 # Physics attributes
 MASS = 200.0
-TURN_SPEED = 180
+TURN_SPEED = 95
 DEG_TO_RAD = pi/180
 MAX_VEL_XY = 70
 MAX_VEL_Z = 5000
-MOVE_SPEED = 50.0 * 100000
+MOVE_SPEED = 85.0 * 100000
 JUMP_FORCE = 7.0 * 100000
 STOP_DAMPING = 10
 JMP_STOP_DAMPING = 0.88
@@ -24,7 +24,7 @@ PNT = Point3(0,0,0)
 
 # Snow-based Actions
 MAX_SNOW = 100.0
-COST_DOUBLE_JUMP = 5.0
+COST_DOUBLE_JUMP = 0.0
 COST_AIR_DASH = 10.0
 
 # Smooth this out later

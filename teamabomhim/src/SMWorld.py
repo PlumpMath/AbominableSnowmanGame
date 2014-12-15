@@ -192,7 +192,7 @@ class SMWorld(DirectObject):
 		# Skybox formed
 		skybox = loader.loadModel("../res/models/skybox.egg")
 		# skybox.set_two_sided(true)
-		skybox.setScale(200)
+		skybox.setScale(500)
 		skybox.setPos(0, 0, -450)
 		skybox.reparentTo(render)
 		
@@ -216,6 +216,13 @@ class SMWorld(DirectObject):
 		mountain.setPos(650,800,20)
 		mountain.setScale(120)
 
+		self.caveModel = loader.loadModel("../res/models/cave_tunnel.egg")
+		self.caveModel.reparentTo(render)
+		self.caveModel.setScale(4)
+		self.caveModel.setPos(233,68,32)
+		self.caveModel.setH(135)
+		self.caveModel.setP(180)
+		
 		self.planeTail = SMColide("../res/models/plane_tail.egg", self.worldBullet, self.worldObj, -40, -130, -7, 20, 20, 15, 10)
 		self.planeTail.AIModel.setH(230)		
 		
@@ -686,13 +693,25 @@ class SMWorld(DirectObject):
 				self.planeFrontNP.removeNode()
 				self.planeWingNP.removeNode()
 				self.hmNP.removeNode()
-				self.ropeBridge.AIChar.setPos(-200,-300,-200)
-				self.ropeBridge.AIChar.removeNode()
-				self.planeFront.removeNode()
-				self.planeTail.AIChar.setPos(-200,-200,-200)
-				self.planeTail.AIChar.removeNode()
-				self.caveNew.removeNode()
-				
+				if(int(self.mapID) == 1):
+					self.ropeBridge.AIChar.setPos(-200,-300,-200)
+					# self.ropeBridge.AIChar.removeNode()
+					self.planeFront.removeNode()
+					self.planeTail.AIChar.setPos(-200,-200,-200)
+					# self.planeTail.AIChar.removeNode()
+					self.caveNew.setPos(-1000,-1000,-1000);
+					self.caveModel.removeNode()
+					#Added More Props here!
+					self.boulder = SMColide("../res/models/rock_3.egg", self.worldBullet, self.worldObj, 117, 123, 17, 25, 25, 25, 15)
+					# self.boulder = SMColide("../res/models/rock_1.egg", self.worldBullet, self.worldObj, 127, 113, 17, 25, 25, 25, 10)
+				elif(int(self.mapID) == 2):
+					self.boulder.AIChar.setPos(-222,-222,-222)
+					self.caveNew.setScale(150)
+					self.caveNew.setPos(-50, 95, -50)
+					# self.skybox.setScale(600)
+					# self.caveNew.setH(0)
+					# self.boulder.removeNode()
+			
 				self.mapID += 1
 				print self.mapID
 				# EX: maps/map-1/map-1.yetimap
