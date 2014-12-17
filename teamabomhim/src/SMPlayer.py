@@ -29,8 +29,8 @@ COST_DOUBLE_JUMP = 0.0
 COST_AIR_DASH = 10.0
 
 # Smooth this out later
-SNOW_HEIGHT = -4.5
-SOLID_HEIGHT = -3.0
+SNOW_HEIGHT = -3.8
+SOLID_HEIGHT = -2.5
 
 # Terrain enumeration
 TERRAIN_SNOW = 0
@@ -72,7 +72,7 @@ class SMPlayer():
 		self.sc = 0.00
 		self.ic = 0.00
 		self.fric = 0.45
-		self.snowAbsorbed = 0 # This should be an int.
+		self.snowAbsorbed = 0
 		self.currentAnimation = ANIM_IDLE
 		
 		# Stuff for reading and displaying information from the maps.
@@ -87,6 +87,7 @@ class SMPlayer():
 		self.SX = self.SPK.getXSize()
 		self.SY = self.SPK.getYSize()
 		self.CALC_COF = lambda x: 0.4 * x + 0.05
+		self.CALC_SINK = lambda x: 1.5 * x - 0.3
 		self.updateTerrain()
 		print("Player initialized.")
 	
@@ -107,12 +108,10 @@ class SMPlayer():
 		yetiShape = BulletCapsuleShape(yetiRadius, yetiHeight - 2 * yetiRadius, ZUp)
 		
 		modelPrefix = "../res/models/yeti_"
-		# self.yetiModel = loader.loadModel("../res/models/yeti_idle.egg")
 		self.yetiModel = Actor("../res/models/yeti.egg", {"idle":"../res/models/yeti_idle.egg", "walk":"../res/models/yeti_walking.egg"})
 		self.yetiModel.setH(90)
 		self.yetiModel.setPos(0, 0, SNOW_HEIGHT)
-		
-		# self.yetiModel.flattenLight()
+
 		playerNode = BulletRigidBodyNode("Player")
 		playerNode.setMass(MASS)
 		playerNode.addShape(yetiShape)
@@ -131,7 +130,9 @@ class SMPlayer():
 		
 		self.bulletWorld.attachRigidBody(playerNP.node())
 		
+		# Hopefully Brandon will get those animation files to me so I can convert them.
 		# self.setAnimation('idle')
+		
 		return playerNP
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -141,17 +142,33 @@ class SMPlayer():
 	def getPlayerNode(self):
 		return playerNode
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Adds snow to the snow meter.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def addSnow(self, amt):
 		if(self.snowAbsorbed + amt >= MAX_SNOW):
 			self.snowAbsorbed = MAX_SNOW
 		else:
 			self.snowAbsorbed += amt
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Sets the snow meter to a specified amount.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def setSnow(self, value):
 		self.snowAbsorbed = value
 	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Returns the amount of snow the player has collected.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	def getSnow(self):
 		return self.snowAbsorbed
+	
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
+	# Resets the jump flag.
+	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def resetJump(self):
 		self.jumpDown = False
@@ -188,7 +205,6 @@ class SMPlayer():
 			self.setAirborneFlag(True)
 			self.setFactor(1, 1, 1)
 			self.setVelocity(Vec3(v.getX(), v.getY(), 0))
-			# self.audioMgr.playSFX("yetiJump01")
 			self.applyForce(Vec3(0, 0, JUMP_FORCE))
 		elif(self.jumpTime > 0 and self.jumpDown == True and self.doubleJumping == False):
 			dt = globalClock.getDt()
@@ -221,8 +237,7 @@ class SMPlayer():
 		self.isAirborne = flag
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
-	# Returns the terrain ID of the player's (x,y)
-	# 0 = SNOW;  1 = ICE;  2 = STONE
+	# Updates various things to do with the terrain type.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def updateTerrain(self):
@@ -245,10 +260,8 @@ class SMPlayer():
 			mpos = self.yetiModel.getPos()
 			mx = mpos.getX()
 			my = mpos.getY()
-			h = SOLID_HEIGHT
-			if(self.terrainType == TERRAIN_SNOW):
-				h = SNOW_HEIGHT
-			self.yetiModel.setPos(mx, my, h)
+			h = self.CALC_SINK(self.sc)
+			self.yetiModel.setPos(mx, my, SOLID_HEIGHT - h)
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Sets the terrain type.
@@ -308,11 +321,11 @@ class SMPlayer():
 	# (h = Terrain height at X,y; th = terrain z coord)
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def snapToTerrain(self, h, th):
+	def snapToTerrain(self, z):
 		pos = self.getPosition()
 		x = pos.getX()
 		y = pos.getY()
-		self.playerNP.setPos(x, y, (h - (th / 2)) + 4.5)
+		self.playerNP.setPos(x, y, z + 5)
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Slows down and stops the player's horizontal movement.
@@ -339,7 +352,7 @@ class SMPlayer():
 	
 	def respawn(self):
 		self.fric = 0.45
-		self.playerNP.setPos(self.startX, self.startY, self.startZ)
+		self.playerNP.setPos(self.startX, self.startY, self.startZ + 1)
 		self.setVelocity(Vec3(0,0,0))
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------

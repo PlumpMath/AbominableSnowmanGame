@@ -56,6 +56,7 @@ class SMBall():
 	
 	def destroy(self):
 		self.ballNP.removeNode()
+		self.ballNP = None
 		self.ballModel.detachNode()
 		self.ballNP = NodePath()
 		self.ballExists = False
@@ -73,8 +74,7 @@ class SMBall():
 			if(self.rolledOnce):
 				self.ballRBody.removeShape(self.ballShape)
 				self.ballModel.detachNode()
-				sleep(0.2)
-					
+			
 			pos = self.playerObj.getPosition()
 			x = pos.getX()
 			y = pos.getY()
@@ -124,9 +124,6 @@ class SMBall():
 			self.ballModel.setScale(sx + (SCALE_RATE * dt), sy + (SCALE_RATE * dt), sz + (SCALE_RATE * dt))
 			self.ballModel.setPos(px, py + (TRANS_RATE * dt), pz + (TRANS_RATE * dt))
 
-			
-			
-			
 	def getSize(self):
 		return self.ballModel.getScale().getX()
 	

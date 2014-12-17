@@ -14,7 +14,7 @@ class Game(DirectObject):
 	def __init__(self):
 		print("LINK START")
 		self.textObj = SMText()
-		self.textObj.addText("test", "abom20141207")
+		self.textObj.addText("test", "abom20141216")
 		
 		self.audioMgr = SMAudioManager()
 

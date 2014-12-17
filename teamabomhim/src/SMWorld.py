@@ -69,7 +69,7 @@ class SMWorld(DirectObject):
 		
 		# 2nd Line: Deathzone Height
 		# ONE INTEGER
-		deathHeight = int(metaLines[1])
+		self.deathHeight = int(metaLines[1])
 		
 		# Get dem snowflakes
 		self.snowflakePositions = []
@@ -96,7 +96,7 @@ class SMWorld(DirectObject):
 		self.audioMgr = aObj
 		self.worldObj = self.setupWorld()
 		self.heightMap = self.setupHeightmap(self.mapName)
-		self.deathZone = self.setupDeathzone(deathHeight)
+		self.deathZone = self.setupDeathzone(self.deathHeight)
 		self.debugNode = self.setupDebug()	
 		
 		# Player Init
@@ -194,38 +194,29 @@ class SMWorld(DirectObject):
 		skybox.setPos(0, 0, -450)
 		skybox.reparentTo(render)
 		
-		
-		#ADDED THIS STUFF BECAUSE OBJECTMAP IS TOO INACCURATE TOO PLACE ITEMS PROPERLY
-		self.caveNew = loader.loadModel("../res/models/cave_new.egg")
-		self.caveNew.reparentTo(render)
-		self.caveNew.setScale(11)
-		self.caveNew.setPos(-50, 95, -13)
-		self.caveNew.setH(0)
-		
-		self.planeFront = loader.loadModel("../res/models/plane_front")
-		self.planeFront.reparentTo(render)
-		self.planeFront.setScale(8)
-		self.planeFront.setPos(190,-100,-15)
-		self.planeFront.setH(190)
-		self.planeFront.setR(30)
-		
 		mountain = loader.loadModel("../res/models/mountain.egg")
 		mountain.reparentTo(render)
 		mountain.setPos(650,800,20)
 		mountain.setScale(120)
-
-		self.caveModel = loader.loadModel("../res/models/cave_tunnel.egg")
-		self.caveModel.reparentTo(render)
-		self.caveModel.setScale(4)
-		self.caveModel.setPos(233,68,32)
-		self.caveModel.setH(135)
-		self.caveModel.setP(180)
 		
-		self.planeTail = SMCollide("../res/models/plane_tail.egg", self.worldBullet, self.worldObj, -40, -130, -7, 20, 20, 15, 10, 230)
-		# self.planeTail.AIModel.setH(230)		
+		self.colObjects = []
 		
-		self.ropeBridge = SMCollide("../res/models/rope_bridge.egg", self.worldBullet, self.worldObj, 180, 115, 30, 45, 45, 3, 6, 50)
-		# self.ropeBridge.AIModel.setH(50)
+		self.caveNew = SMCollide("../res/models/cave_new.egg", self.worldBullet, self.worldObj, Point3(-50, 95, -13), 11, Vec3(0,0,0))
+		self.colObjects.append(self.caveNew)
+		
+		self.planeFront = SMCollide("../res/models/plane_front", self.worldBullet, self.worldObj, Point3(190, -100, -15), 8, Vec3(190,0,30))
+		self.colObjects.append(self.planeFront)
+		
+		self.caveModel = SMCollide("../res/models/cave_tunnel.egg", self.worldBullet, self.worldObj, Point3(233, 68, 32), 4, Vec3(135,180,0))
+		self.colObjects.append(self.caveModel)
+		
+		self.planeTail = SMCollide("../res/models/plane_tail.egg", self.worldBullet, self.worldObj, Point3(-40, -130, -7), 10, Vec3(230,0,0))
+		self.colObjects.append(self.planeTail)
+		
+		self.ropeBridge = SMCollide("../res/models/rope_bridge.egg", self.worldBullet, self.worldObj, Point3(180, 115, 30), 6, Vec3(50,0,0))
+		self.colObjects.append(self.ropeBridge)
+		
+		self.colObjectCount = len(self.colObjects)
 		
 		print("World initialized.")
 
@@ -359,9 +350,9 @@ class SMWorld(DirectObject):
 		rockModel = loader.loadModel("../res/models/rock_1.egg")
 		rock2Model = loader.loadModel("../res/models/rock_2.egg")
 		rock3Model = loader.loadModel("../res/models/rock_3.egg")
-		caveModel = loader.loadModel("../res/models/cave_new.egg")
-		planeFrontModel = loader.loadModel("../res/models/plane_front.egg")
-		planeWingModel = loader.loadModel("../res/models/plane_wing.egg")
+		# caveModel = loader.loadModel("../res/models/cave_new.egg")
+		# planeFrontModel = loader.loadModel("../res/models/plane_front.egg")
+		# planeWingModel = loader.loadModel("../res/models/plane_wing.egg")
 		texpk = loader.loadTexture(scmPath).peek()
 		
 		# GameObject nodepath for flattening
@@ -370,9 +361,9 @@ class SMWorld(DirectObject):
 		self.rockNP = self.objNP.attachNewNode("goRocks")
 		self.rock2NP = self.objNP.attachNewNode("goRocks2")
 		self.rock3NP = self.objNP.attachNewNode("goRocks3")
-		self.caveNP = self.objNP.attachNewNode("goCave")
-		self.planeFrontNP = self.objNP.attachNewNode("goPlaneFront")
-		self.planeWingNP = self.objNP.attachNewNode("goPlaneWing")
+		# self.caveNP = self.objNP.attachNewNode("goCave")
+		# self.planeFrontNP = self.objNP.attachNewNode("goPlaneFront")
+		# self.planeWingNP = self.objNP.attachNewNode("goPlaneWing")
 		
 		for i in range(0, texpk.getXSize()):
 			for j in range(0, texpk.getYSize()):
@@ -400,27 +391,27 @@ class SMWorld(DirectObject):
 					newRock3.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
 					rock3Model.instanceTo(newRock3)
 					
-				if(int(color.getX() * 255.0) == 64):
-					newCave = self.caveNP.attachNewNode("newCave")
-					newCave.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
-					newCave.setScale(5)
-					newCave.setP(180)
-					caveModel.instanceTo(newCave)
+				# if(int(color.getX() * 255.0) == 64):
+					# newCave = self.caveNP.attachNewNode("newCave")
+					# newCave.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					# newCave.setScale(5)
+					# newCave.setP(180)
+					# caveModel.instanceTo(newCave)
 				
-				if(int(color.getX() * 255.0) == 191):
-					newPlaneFront = self.planeFrontNP.attachNewNode("newPlaneFront")
-					newPlaneFront.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
-					newPlaneFront.setScale(6)
-					planeFrontModel.instanceTo(newPlaneFront)
+				# if(int(color.getX() * 255.0) == 191):
+					# newPlaneFront = self.planeFrontNP.attachNewNode("newPlaneFront")
+					# newPlaneFront.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					# newPlaneFront.setScale(6)
+					# planeFrontModel.instanceTo(newPlaneFront)
 					
-				if(int(color.getX() * 255.0) == 179):
-					newPlaneWing = self.planeWingNP.attachNewNode("newPlaneWing")
-					newPlaneWing.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
-					newPlaneWing.setScale(6)
-					newPlaneWing.setH(250)
-					newPlaneWing.setR(180)
-					newPlaneWing.setP(135)
-					planeWingModel.instanceTo(newPlaneWing)
+				# if(int(color.getX() * 255.0) == 179):
+					# newPlaneWing = self.planeWingNP.attachNewNode("newPlaneWing")
+					# newPlaneWing.setPos(i - texpk.getXSize() / 2, j - texpk.getYSize() / 2, self.hmTerrain.get_elevation(i, j) * self.hmHeight - self.hmHeight / 2)
+					# newPlaneWing.setScale(6)
+					# newPlaneWing.setH(250)
+					# newPlaneWing.setR(180)
+					# newPlaneWing.setP(135)
+					# planeWingModel.instanceTo(newPlaneWing)
 
 		self.snowflakes = []
 		
@@ -502,11 +493,26 @@ class SMWorld(DirectObject):
 	
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
-	# Returns the terrain height of coordinates x and y from the heightmap.
+	# Returns the terrain height of the nearest vertical descending raycast from the passed Point3.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def getTerrainHeight(self, x, y):
-		return self.hmTerrain.get_elevation(x + self.hmOffset, y + self.hmOffset) * self.hmHeight
+	def getTerrainHeight(self, pos):
+		result = 0
+		x = pos.getX()
+		y = pos.getY()
+		z = pos.getZ()
+		rayTerrA = Point3(x, y, z)
+		rayTerrB = Point3(x, y, z - 256)
+		rayTest = self.worldBullet.rayTestClosest(rayTerrA, rayTerrB)
+		
+		rayNode = rayTest.getNode()
+		if (rayTest.hasHit()):
+			rayPos = rayTest.getHitPos()
+			result = rayPos.getZ()
+		else:
+			self.playerObj.respawn()
+		return result
+		# return self.hmTerrain.get_elevation(x + self.hmOffset, y + self.hmOffset) * self.hmHeight
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Handles player movement
@@ -588,8 +594,8 @@ class SMWorld(DirectObject):
 		base.win.movePointer(0, 400, 300)
 		
 		# So updating the stats is VERY expensive.
-		# if (self.debugNode.isHidden() == False):
-			# self.updateStats()
+		if (self.debugNode.isHidden() == False):
+			self.updateStats()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Various tests concerning the player flags and collisions.
@@ -613,18 +619,18 @@ class SMWorld(DirectObject):
 		self.terrSteepness = 1.0 - rz
 
 		# Redo collision flags later
-		tempFlag = False
+		objCollisionFlag = False
 		
 		# Snow/Ice height adjust
 		self.playerObj.updateTerrain()
 		
-		# Collision: Player x Terrain
-		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
-			if(self.playerObj.getAirborneFlag()):
-				self.audioMgr.playSFX("snowCrunch01")
-			self.playerObj.setAirborneFlag(False)
-			self.canAirDash = True
-			self.playerObj.setFactor(1, 1, 1)
+		# Collision: Player x Objects
+		for i in xrange(0, self.colObjectCount):
+			if(self.colObj.didCollide(self.playerNP.node(), self.colObjects[i].AINode)):
+				objCollisionFlag = True
+				self.playerObj.setAirborneFlag(False)
+				self.canAirDash = True
+				self.playerObj.setFactor(1,1,1)
 		
 		# Collision: Player x Snowball
 		if(self.ballObj.exists() and self.colObj.didCollide(self.playerNP.node(), self.ballObj.getRigidbody())):
@@ -634,7 +640,17 @@ class SMWorld(DirectObject):
 		else:
 			self.sbCollideFlag = False
 		
+		# Collision: Player x Terrain
+		if(self.colObj.didCollide(self.playerNP.node(), self.heightMap)):
+			if(self.playerObj.getAirborneFlag()):
+				self.audioMgr.playSFX("snowCrunch01")
+			self.playerObj.setAirborneFlag(False)
+			self.canAirDash = True
+			self.playerObj.setFactor(1, 1, 1)
+			objCollisionFlag = False
+			
 		# Collision: Player x Death Zone
+		# if(pz - 7 <= self.deathHeight or (self.colObj.didCollide(self.playerNP.node(), self.deathZone.node()))):
 		if(self.colObj.didCollide(self.playerNP.node(), self.deathZone.node())):
 			print("Player confirmed #REKT")
 			self.playerObj.respawn()
@@ -645,9 +661,10 @@ class SMWorld(DirectObject):
 			self.playerObj.respawn()
 		
 		# Snap to terrain if... something. I need to restructure this. Don't read it.
-		if(not(self.playerObj.getAirborneFlag()) and not(self.sbCollideFlag)):
-			th = self.getTerrainHeight(px, py)
-			self.playerObj.snapToTerrain(th, self.hmHeight)
+		if(not(self.playerObj.getAirborneFlag()) and not(self.sbCollideFlag) and not(objCollisionFlag)):
+			z = self.getTerrainHeight(Point3(px, py, pz))
+			self.playerObj.snapToTerrain(z)
+			# self.playerObj.snapToTerrain(th, self.hmHeight)
 		
 		# Collision: Player x Snowflakes
 		for i in xrange(0, self.snowflakeCount):
@@ -685,25 +702,24 @@ class SMWorld(DirectObject):
 				self.rockNP.removeNode()
 				self.rock2NP.removeNode()
 				self.rock3NP.removeNode()
-				self.caveNP.removeNode()
-				self.planeFrontNP.removeNode()
-				self.planeWingNP.removeNode()
+				# self.caveNP.removeNode()
+				# self.planeFrontNP.removeNode()
+				# self.planeWingNP.removeNode()
 				self.hmNP.removeNode()
 				if(int(self.mapID) == 1):
 					self.ropeBridge.AIChar.setPos(-200,-300,-200)
 					# self.ropeBridge.AIChar.removeNode()
-					self.planeFront.removeNode()
+					self.planeFront.AIChar.removeNode()
 					self.planeTail.AIChar.setPos(-200,-200,-200)
 					# self.planeTail.AIChar.removeNode()
-					self.caveNew.setPos(-1000,-1000,-1000);
-					self.caveModel.removeNode()
+					self.caveNew.AIChar.setPos(-1000,-1000,-1000);
+					self.caveModel.AIChar.removeNode()
 					#Added More Props here!
-					self.boulder = SMCollide("../res/models/rock_3.egg", self.worldBullet, self.worldObj, 117, 123, 17, 25, 25, 25, 15, 0)
-					# self.boulder = SMCollide("../res/models/rock_1.egg", self.worldBullet, self.worldObj, 127, 113, 17, 25, 25, 25, 10, 0)
+					self.boulder = SMCollide("../res/models/rock_3.egg", self.worldBullet, self.worldObj, Point3(117, 123, 17), 15, Vec3(0,0,0))
 				elif(int(self.mapID) == 2):
 					self.boulder.AIChar.setPos(-222,-222,-222)
-					self.caveNew.setScale(150)
-					self.caveNew.setPos(-50, 95, -50)
+					self.caveNew.AIChar.setScale(150)
+					self.caveNew.AIChar.setPos(-50, 95, -50)
 					# self.skybox.setScale(600)
 					# self.caveNew.setH(0)
 					# self.boulder.removeNode()
@@ -730,7 +746,7 @@ class SMWorld(DirectObject):
 			
 				# 2nd Line: Deathzone Height
 				# ONE INTEGER
-				deathHeight = int(metaLines[1])
+				self.deathHeight = int(metaLines[1])
 			
 				
 				self.snowflakePositions = []
@@ -748,7 +764,7 @@ class SMWorld(DirectObject):
 				#load new map
 				self.mapName = str(self.mapID)
 				self.heightMap = self.setupHeightmap(self.mapName)
-				self.deathZone = self.setupDeathzone(deathHeight)
+				self.deathZone = self.setupDeathzone(self.deathHeight)
 					
 				
 				self.loadingText.cleanup() 
@@ -779,7 +795,7 @@ class SMWorld(DirectObject):
 		fric = str(round(self.playerObj.getFriction(), 2))
 		ip = str(round(self.playerObj.getIceCoefficient(), 2))
 		sp = str(round(self.playerObj.getSnowCoefficient(), 2))
-		tHeight = str(round(self.getTerrainHeight(x, y), 1))
+		tHeight = str(round(self.getTerrainHeight(Point3(x, y, z)), 1))
 		self.textObj.editText("yetiPos", "Position: (" + sx + ", " + sy + ", " + sz + ")")
 		self.textObj.editText("yetiVel", "Velocity: (" + vx + ", " + vy + ", " + vz + ")")
 		self.textObj.editText("yetiFric", "Friction: " + fric)
