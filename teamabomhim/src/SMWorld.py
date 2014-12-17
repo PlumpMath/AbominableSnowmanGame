@@ -7,7 +7,7 @@ from direct.particles.Particles import Particles
 from direct.particles.ParticleEffect import ParticleEffect
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode, BulletGhostNode
-from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
+from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape, BulletTriangleMeshShape
 from panda3d.bullet import ZUp
 from random import randint
 
@@ -32,7 +32,7 @@ from SMAI import SMAI
 from SMGUI import SMGUI
 from SMGUICounter import SMGUICounter
 from SMGUIMeter import SMGUIMeter
-from SMColide import SMColide
+from SMCollide import SMCollide
 
 # Global gravity constant (9.81 is for scrubs)
 GRAVITY = 226
@@ -82,9 +82,7 @@ class SMWorld(DirectObject):
 			sfz = int(sfList[2])
 			self.snowflakePositions.append(Point3(sfx, sfy, sfz))
 			print("New snowflake to add: (" + str(sfx) + "," + str(sfy) + "," + str(sfz) + ")")
-		
-		
-		
+
 		#load in controls
 		ctrlFl = open("ctrConfig.txt")
 		#will skip n lines where [n,]
@@ -223,11 +221,11 @@ class SMWorld(DirectObject):
 		self.caveModel.setH(135)
 		self.caveModel.setP(180)
 		
-		self.planeTail = SMColide("../res/models/plane_tail.egg", self.worldBullet, self.worldObj, -40, -130, -7, 20, 20, 15, 10)
-		self.planeTail.AIModel.setH(230)		
+		self.planeTail = SMCollide("../res/models/plane_tail.egg", self.worldBullet, self.worldObj, -40, -130, -7, 20, 20, 15, 10, 230)
+		# self.planeTail.AIModel.setH(230)		
 		
-		self.ropeBridge = SMColide("../res/models/rope_bridge.egg", self.worldBullet, self.worldObj, 180, 115, 30, 45, 45, 3, 6)
-		self.ropeBridge.AIModel.setH(50)
+		self.ropeBridge = SMCollide("../res/models/rope_bridge.egg", self.worldBullet, self.worldObj, 180, 115, 30, 45, 45, 3, 6, 50)
+		# self.ropeBridge.AIModel.setH(50)
 		
 		print("World initialized.")
 
@@ -590,16 +588,14 @@ class SMWorld(DirectObject):
 		base.win.movePointer(0, 400, 300)
 		
 		# So updating the stats is VERY expensive.
-		if (self.debugNode.isHidden() == False):
-			self.updateStats()
+		# if (self.debugNode.isHidden() == False):
+			# self.updateStats()
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Various tests concerning the player flags and collisions.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def doPlayerTests(self):
-		
-		# self.completeLevel()
 		
 		# Player's position
 		plPos = self.playerObj.getPosition()
@@ -702,8 +698,8 @@ class SMWorld(DirectObject):
 					self.caveNew.setPos(-1000,-1000,-1000);
 					self.caveModel.removeNode()
 					#Added More Props here!
-					self.boulder = SMColide("../res/models/rock_3.egg", self.worldBullet, self.worldObj, 117, 123, 17, 25, 25, 25, 15)
-					# self.boulder = SMColide("../res/models/rock_1.egg", self.worldBullet, self.worldObj, 127, 113, 17, 25, 25, 25, 10)
+					self.boulder = SMCollide("../res/models/rock_3.egg", self.worldBullet, self.worldObj, 117, 123, 17, 25, 25, 25, 15, 0)
+					# self.boulder = SMCollide("../res/models/rock_1.egg", self.worldBullet, self.worldObj, 127, 113, 17, 25, 25, 25, 10, 0)
 				elif(int(self.mapID) == 2):
 					self.boulder.AIChar.setPos(-222,-222,-222)
 					self.caveNew.setScale(150)

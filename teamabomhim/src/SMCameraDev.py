@@ -27,15 +27,15 @@ class SMCamera():
 		self.aimMode=False
 
 		# Set up camera physics
-		camShape = BulletSphereShape(COL_RADIUS)
+		# camShape = BulletSphereShape(COL_RADIUS)
 		camRB = BulletRigidBodyNode("cameraRB")
-		camRB.setMass(1.0)
-		camRB.addShape(camShape)
-		camRB.setAngularFactor(Vec3(0,0,0))
-		camRB.setDeactivationEnabled(False)
+		# camRB.setMass(1.0)
+		# camRB.addShape(camShape)
+		# camRB.setAngularFactor(Vec3(0,0,0))
+		# camRB.setDeactivationEnabled(False)
 		
 		self.camNP = self.worldObj.attachNewNode(camRB)
-		self.bulletWorld.attachRigidBody(camRB)
+		# self.bulletWorld.attachRigidBody(camRB)
 		
 		base.cam.reparentTo(self.camNP)
 		self.camNP.reparentTo(self.playerObj.getNodePath())
