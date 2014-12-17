@@ -1,6 +1,7 @@
 from panda3d.core import Vec3, VBase3, Vec4, BitMask32, Point3, KeyboardButton, Filename, PNMImage, GeoMipTerrain, VBase4
 from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import LightRampAttrib, AmbientLight, DirectionalLight
+from direct.actor.Actor import Actor
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode, BulletDebugNode, BulletCharacterControllerNode
 from panda3d.bullet import BulletBoxShape, BulletCapsuleShape, BulletCylinderShape, BulletPlaneShape, BulletHeightfieldShape
@@ -36,6 +37,14 @@ TERRAIN_SNOW = 0
 TERRAIN_ICE = 1
 TERRAIN_STONE = 2
 
+# Animation IDs
+ANIM_IDLE = 0
+ANIM_WALK = 1
+ANIM_JUMP = 2
+ANIM_FALL = 3
+ANIM_ROLL = 4
+
+
 class SMPlayer():
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -64,6 +73,8 @@ class SMPlayer():
 		self.ic = 0.00
 		self.fric = 0.45
 		self.snowAbsorbed = 0 # This should be an int.
+		self.currentAnimation = ANIM_IDLE
+		
 		# Stuff for reading and displaying information from the maps.
 		map = self.smWorld.mapName
 		self.FPK = loader.loadTexture('../maps/map' + map + "/map" + map + '-f.png').peek()
@@ -94,9 +105,12 @@ class SMPlayer():
 		yetiHeight = 7
 		yetiRadius = 2
 		yetiShape = BulletCapsuleShape(yetiRadius, yetiHeight - 2 * yetiRadius, ZUp)
-		self.yetiModel = loader.loadModel("../res/models/yeti_idle.egg")
+		
+		modelPrefix = "../res/models/yeti_"
+		# self.yetiModel = loader.loadModel("../res/models/yeti_idle.egg")
+		self.yetiModel = Actor("../res/models/yeti.egg", {"idle":"../res/models/yeti_idle.egg", "walk":"../res/models/yeti_walking.egg"})
 		self.yetiModel.setH(90)
-		self.yetiModel.setPos(0, 0, SNOW_HEIGHT) # This is NOT the actual player position. Use playerNP instead.
+		self.yetiModel.setPos(0, 0, SNOW_HEIGHT)
 		
 		# self.yetiModel.flattenLight()
 		playerNode = BulletRigidBodyNode("Player")
@@ -111,11 +125,13 @@ class SMPlayer():
 		
 		playerNP = self.worldNP.attachNewNode(playerNode)
 		playerNP.setPos(x, y, z)
-		#playerNP.setP(90)
 		playerNP.setH(270)
-		# self.setAnimation( "../res/models/yeti_idle", playerNP);
+		
 		self.yetiModel.reparentTo(playerNP)
+		
 		self.bulletWorld.attachRigidBody(playerNP.node())
+		
+		# self.setAnimation('idle')
 		return playerNP
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -435,12 +451,9 @@ class SMPlayer():
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	# Sets the player's animation loop.
-	# WORK IN PROGRESS.
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	def setAnimation(self, id):
-		print("Implemented!")
-		self.yetiModel = loader.loadModel(id)
-		# self.yetiModel.setH(90)
-		# self.yetiModel.setPos(0, 0, SNOW_HEIGHT) # This is NOT the actual player position. Use playerNP instead.
-		# self.yetiModel.reparentTo(playerNP)
+	def setAnimation(self, anim):
+		self.yetiModel.stop()
+		self.yetiModel.loop(anim)
+		
